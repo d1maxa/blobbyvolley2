@@ -64,7 +64,27 @@ std::shared_ptr<IUserConfigReader> IUserConfigReader::createUserConfigReader(con
 
 PlayerIdentity UserConfig::loadPlayerIdentity(PlayerSide side, bool force_human)
 {
-	std::string prefix = side == LEFT_PLAYER ? "left" : "right";
+	std::string prefix; 
+
+	switch (side)
+	{
+	case LEFT_PLAYER:
+		prefix = "left";
+		break;
+
+	case RIGHT_PLAYER:
+		prefix = "right";
+		break;
+
+	case LEFT_PLAYER_2:
+		prefix = "left_2";
+		break;
+
+	case RIGHT_PLAYER_2:
+		prefix = "right_2";
+		break;
+	}
+
 	std::string name = "";
 	// init local input
 	if(force_human)
