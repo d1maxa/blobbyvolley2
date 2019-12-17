@@ -39,6 +39,7 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 
 	public:
 		PhysicWorld();
+		PhysicWorld(bool playersEnabled[MAX_PLAYERS]);
 		~PhysicWorld();
 
 		// set the callback
@@ -60,8 +61,8 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 		bool blobHitGround(PlayerSide player) const;
 
 		// Important: This assumes a fixed framerate of 60 FPS!
-		void step(const PlayerInput& leftInput, const PlayerInput& rightInput,
-					bool isBallValid, bool isGameRunning);
+		void step(const PlayerInput& leftInput, const PlayerInput& rightInput, bool isBallValid, bool isGameRunning);
+		void step(PlayerInput inputs[MAX_PLAYERS], bool isBallValid, bool isGameRunning);
 
 		// gets the physic state
 		PhysicState getState() const;
@@ -94,6 +95,8 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 
 		Vector2 mBlobVelocity[MAX_PLAYERS];
 		Vector2 mBallVelocity;
+		
+		bool mPlayersEnabled[MAX_PLAYERS];
 
 		float mBallRotation;
 		float mBallAngularVelocity;

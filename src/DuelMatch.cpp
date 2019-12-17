@@ -46,12 +46,41 @@ DuelMatch::DuelMatch(bool remote, std::string rules, int score_to_win) :
 
 	if(!mRemote)
 		mPhysicWorld->setEventCallback( [this]( const MatchEvent& event ) { mEvents.push_back(event); } );
+
+	mPlayersEnabled[LEFT_PLAYER] = true;
+	mPlayersEnabled[RIGHT_PLAYER] = true;
 }
 
-void DuelMatch::setPlayers( PlayerIdentity lplayer, PlayerIdentity rplayer)
+DuelMatch::DuelMatch(bool remote, std::string rules, bool playersEnabled[4], int score_to_win) :
+		mLogic(createGameLogic(rules, this, score_to_win == 0 ? IUserConfigReader::createUserConfigReader("config.xml")->getInteger("scoretowin") : score_to_win)),
+		mPaused(false),
+		mRemote(remote)
+{
+	mPhysicWorld.reset(new PhysicWorld(playersEnabled));
+
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		mPlayersEnabled[i] = playersEnabled[i];
+		setInputSource((PlayerSide)i, std::make_shared<InputSource>());
+	}
+
+	if (!mRemote)
+		mPhysicWorld->setEventCallback([this](const MatchEvent& event) { mEvents.push_back(event); });		
+}
+
+
+void DuelMatch::setPlayers(PlayerIdentity lplayer, PlayerIdentity rplayer)
 {
 	mPlayers[LEFT_PLAYER] = lplayer;
 	mPlayers[RIGHT_PLAYER] = rplayer;
+}
+
+void DuelMatch::setPlayers(PlayerIdentity players[MAX_PLAYERS])
+{
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		mPlayers[i] = players[i];
+	}	
 }
 
 void DuelMatch::setInputSources(std::shared_ptr<InputSource> linput, std::shared_ptr<InputSource> rinput )
@@ -66,9 +95,18 @@ void DuelMatch::setInputSources(std::shared_ptr<InputSource> linput, std::shared
 	mInputSources[RIGHT_PLAYER]->setMatch(this);
 }
 
-void DuelMatch::reset()
+void DuelMatch::setInputSource(PlayerSide player, std::shared_ptr<InputSource> input)
 {
-	mPhysicWorld.reset(new PhysicWorld());
+	if (input)
+	{
+		mInputSources[player] = input;
+		mInputSources[player]->setMatch(this);
+	}	
+}
+
+void DuelMatch::reset()
+{	
+	mPhysicWorld.reset(new PhysicWorld(mPlayersEnabled));
 	mLogic = mLogic->clone();
 }
 
@@ -90,19 +128,20 @@ void DuelMatch::step()
 	if(mPaused)
 		return;
 
-	mTransformedInput[LEFT_PLAYER] = mInputSources[LEFT_PLAYER]->updateInput();
-	mTransformedInput[RIGHT_PLAYER] = mInputSources[RIGHT_PLAYER]->updateInput();
-
-	if(!mRemote)
+	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
-		mTransformedInput[LEFT_PLAYER] = mLogic->transformInput( mTransformedInput[LEFT_PLAYER], LEFT_PLAYER );
-		mTransformedInput[RIGHT_PLAYER] = mLogic->transformInput( mTransformedInput[RIGHT_PLAYER], RIGHT_PLAYER );
-	}
+		if (mPlayersEnabled[i])
+		{
+			mTransformedInput[i] = mInputSources[i]->updateInput();
+
+			if (!mRemote)
+				mTransformedInput[i] = mLogic->transformInput(mTransformedInput[i], (PlayerSide)i);
+		}
+	}		
 
 	// do steps in physic an logic
 	mLogic->step( getState() );
-	mPhysicWorld->step( mTransformedInput[LEFT_PLAYER], mTransformedInput[RIGHT_PLAYER],
-											mLogic->isBallValid(), mLogic->isGameRunning() );
+	mPhysicWorld->step( mTransformedInput, mLogic->isBallValid(), mLogic->isGameRunning());
 
 	// check for all hit events
 

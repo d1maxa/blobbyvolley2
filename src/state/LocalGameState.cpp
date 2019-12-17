@@ -43,27 +43,36 @@ LocalGameState::LocalGameState()
 	: mWinner(false), mRecorder(new ReplayRecorder())
 {
 	std::shared_ptr<IUserConfigReader> config = IUserConfigReader::createUserConfigReader("config.xml");
-	PlayerIdentity leftPlayer = config->loadPlayerIdentity(LEFT_PLAYER, false);
-	PlayerIdentity rightPlayer = config->loadPlayerIdentity(RIGHT_PLAYER, false);
 
-	std::shared_ptr<InputSource> leftInput = InputSourceFactory::createInputSource( config, LEFT_PLAYER);
-	std::shared_ptr<InputSource> rightInput = InputSourceFactory::createInputSource( config, RIGHT_PLAYER);
+	PlayerIdentity players[MAX_PLAYERS];
+	std::shared_ptr<InputSource> inputs[MAX_PLAYERS];
+	bool playersEnabled[MAX_PLAYERS];
+
+	for(int i = 0; i < MAX_PLAYERS; i++)
+	{
+		players[i] = config->loadPlayerIdentity((PlayerSide)i, false);
+		inputs[i] = InputSourceFactory::createInputSource(config, (PlayerSide)i);
+		playersEnabled[i] = inputs[i] != nullptr;
+	}
 
 	// create default replay name
-	setDefaultReplayName(leftPlayer.getName(), rightPlayer.getName());
+	setDefaultReplayName(players[LEFT_PLAYER].getName(), players[RIGHT_PLAYER].getName());
 
 	// set speed
 	SpeedController::getMainInstance()->setGameSpeed( (float)config->getInteger("gamefps") );
-
-
+	
 	SoundManager::getSingleton().playSound("sounds/pfiff.wav", ROUND_START_SOUND_VOLUME);
 
-	mMatch.reset(new DuelMatch( false, config->getString("rules")));
-	mMatch->setPlayers(leftPlayer, rightPlayer);
-	mMatch->setInputSources(leftInput, rightInput);
+	mMatch.reset(new DuelMatch( false, config->getString("rules"), playersEnabled));
+	
+	mMatch->setPlayers(players);	
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		mMatch->setInputSource((PlayerSide)i, inputs[i]);
+	}
 
-	mRecorder->setPlayerNames(leftPlayer.getName(), rightPlayer.getName());
-	mRecorder->setPlayerColors( leftPlayer.getStaticColor(), rightPlayer.getStaticColor() );
+	mRecorder->setPlayerNames(players[LEFT_PLAYER].getName(), players[RIGHT_PLAYER].getName());
+	mRecorder->setPlayerColors(players[LEFT_PLAYER].getStaticColor(), players[RIGHT_PLAYER].getStaticColor() );
 	mRecorder->setGameSpeed((float)config->getInteger("gamefps"));
 	mRecorder->setGameRules( config->getString("rules") );
 }

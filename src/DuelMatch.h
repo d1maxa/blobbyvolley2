@@ -51,10 +51,13 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 		// If remote is true, only physical responses will be calculated
 		// but hit events and score events are received from network
 
-		DuelMatch(bool remote, std::string rules, int score_to_win = 0);
+		DuelMatch(bool remote, std::string rules, int score_to_win = 0);		
+		DuelMatch(bool remote, std::string rules, bool playersEnabled[MAX_PLAYERS], int score_to_win = 0);
 
 		void setPlayers( PlayerIdentity lplayer, PlayerIdentity rplayer);
+		void setPlayers(PlayerIdentity players[MAX_PLAYERS]);		
 		void setInputSources(std::shared_ptr<InputSource> linput, std::shared_ptr<InputSource> rinput );
+		void setInputSource(PlayerSide player, std::shared_ptr<InputSource> input);
 
 		~DuelMatch();
 
@@ -137,6 +140,8 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 		PlayerInput mTransformedInput[MAX_PLAYERS];
 
 		PlayerIdentity mPlayers[MAX_PLAYERS];
+	    //first two are always true
+		bool mPlayersEnabled[MAX_PLAYERS];
 
 		GameLogicPtr mLogic;
 

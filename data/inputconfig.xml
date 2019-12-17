@@ -10,7 +10,7 @@
 	<var name="left_blobby_joystick_left" value="joy_0_axis_-1"/>
 	<var name="left_blobby_joystick_right" value="joy_0_axis_1"/>
 	<var name="left_blobby_joystick_jump" value="joy_0_axis_2"/>
-	<var name="right_blobby_device" value="joystick"/>
+	<var name="right_blobby_device" value="mouse"/>
 	<var name="right_blobby_mouse_jumpbutton" value="1"/>
 	<var name="right_blobby_mouse_sensitivity" value="1.000000"/>
 	<var name="right_blobby_keyboard_left" value="left"/>

@@ -64,6 +64,17 @@ class UserConfig: public IUserConfigReader, public ObjectCounter<UserConfig>
 		void setString(const std::string& name, const std::string& value);
 		void setBool(const std::string& name, bool value);
 		void setInteger(const std::string& name, int value);
+
+		static inline std::string getPlayerPrefix(PlayerSide side)
+		{
+			std::string prefix = side % 2 ? "right" : "left";			
+			if (side > RIGHT_PLAYER)
+			{
+				prefix += "_";
+				prefix += std::to_string(side);
+			}
+			return prefix;
+		}
 	private:
 
 		std::vector<UserConfigVar*> mVars;

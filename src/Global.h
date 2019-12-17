@@ -73,6 +73,13 @@ enum PlayerSide
 	            // and can be used to declare arrays
 };
 
+enum PlayerType
+{
+	//NO_PLAYER = -1,
+	HUMAN_PLAYER = 0,
+	SCRIPT_PLAYER = 1
+};
+
 enum InputDeviceName
 {
 	KEYBOARD = 1,

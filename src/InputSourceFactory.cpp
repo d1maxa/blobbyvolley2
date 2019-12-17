@@ -27,12 +27,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "IUserConfigReader.h"
 #include "LocalInputSource.h"
 #include "ScriptedInputSource.h"
+#include "UserConfig.h"
 
 std::shared_ptr<InputSource> InputSourceFactory::createInputSource( std::shared_ptr<IUserConfigReader> config, PlayerSide side )
-{
-	std::string prefix = side == LEFT_PLAYER ? "left" : "right";
+{	
 	try
 	{
+		auto prefix = UserConfig::getPlayerPrefix(side);
+		//int playerType = config->getInteger(prefix + "_player_type", side > RIGHT_PLAYER ? -1 : 0);
+		auto playerName = config->getString(prefix + "_player_name", "none");
+
+		if (playerName == "none")
+			return nullptr;
+
 		// these operations may throw, i.e., when the script is not found (should not happen)
 		//  or has errors
 		if (config->getBool(prefix + "_player_human"))
@@ -42,8 +49,25 @@ std::shared_ptr<InputSource> InputSourceFactory::createInputSource( std::shared_
 		else
 		{
 			return std::make_shared<ScriptedInputSource>("scripts/" + config->getString(prefix + "_script_name"),
-					side, config->getInteger(prefix + "_script_strength"));
+				side, config->getInteger(prefix + "_script_strength"));
 		}
+
+		/*
+		switch (playerName)
+		{
+		case NO_PLAYER:
+			return nullptr;
+
+		// these operations may throw, i.e., when the script is not found (should not happen)
+		//  or has errors
+		case HUMAN_PLAYER:
+			return std::make_shared<LocalInputSource>(side);
+
+		case SCRIPT_PLAYER:
+			return std::make_shared<ScriptedInputSource>("scripts/" + config->getString(prefix + "_script_name"),
+				side, config->getInteger(prefix + "_script_strength"));		
+		}		
+		*/
 	} catch (std::exception& e)
 	{
 		/// \todo REWORK ERROR REPORTING
