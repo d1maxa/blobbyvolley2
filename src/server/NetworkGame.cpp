@@ -51,10 +51,12 @@ NetworkGame::NetworkGame(RakServer& server, std::shared_ptr<NetworkPlayer> leftP
 			std::string rules, int scoreToWin, float speed) :
 	mServer(server),
 	mMatch(new DuelMatch(false, rules, scoreToWin)),
+	mSpeedController(speed),
 	mLeftInput (new InputSource()),
 	mRightInput(new InputSource()),
+	mLeftLastTime(-1),
+	mRightLastTime(-1),
 	mRecorder(new ReplayRecorder()),
-	mSpeedController(speed),
 	mGameValid(true)
 {
 	// check that both players don't have an active game
@@ -78,6 +80,7 @@ NetworkGame::NetworkGame(RakServer& server, std::shared_ptr<NetworkPlayer> leftP
 	mRecorder->setPlayerNames(leftPlayer->getName(), rightPlayer->getName());
 	mRecorder->setPlayerColors(leftPlayer->getColor(), rightPlayer->getColor());
 	mRecorder->setGameSpeed(mSpeedController.getGameSpeed());
+	mRecorder->setGameRules(rules);
 
 	// read rulesfile into a string
 	int checksum = 0;
