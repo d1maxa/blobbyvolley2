@@ -113,6 +113,21 @@ private:
 	float mRightMouseSensitivity;
 	std::string mRightKeyboard[IA_COUNT];
 	std::string mRightJoystick[IA_COUNT];
+
+	//left data:
+	std::string mLeft2Device;
+	int mLeft2MouseJumpbutton;
+	float mLeft2MouseSensitivity;
+	/// \todo maybe use a struct here
+	std::string mLeft2Keyboard[IA_COUNT];
+	std::string mLeft2Joystick[IA_COUNT];
+	//right data:
+	std::string mRight2Device;
+	int mRight2MouseJumpbutton;
+	float mRight2MouseSensitivity;
+	std::string mRight2Keyboard[IA_COUNT];
+	std::string mRight2Joystick[IA_COUNT];
+
 	//global data:
 	int mBlobbyTouchType;
 

@@ -419,6 +419,28 @@ InputOptionsState::InputOptionsState()
 	mRightJoystick[IA_LEFT] = mOptionConfig.getString("right_blobby_joystick_left");
 	mRightJoystick[IA_RIGHT] = mOptionConfig.getString("right_blobby_joystick_right");
 	mRightJoystick[IA_JUMP] = mOptionConfig.getString("right_blobby_joystick_jump");
+
+	//left data:
+	mLeft2Device = mOptionConfig.getString("left_2_blobby_device");
+	mLeft2MouseJumpbutton = mOptionConfig.getInteger("left_2_blobby_mouse_jumpbutton");
+	mLeft2MouseSensitivity = mOptionConfig.getFloat("left_2_blobby_mouse_sensitivity");
+	mLeft2Keyboard[IA_LEFT] = mOptionConfig.getString("left_2_blobby_keyboard_left");
+	mLeft2Keyboard[IA_RIGHT] = mOptionConfig.getString("left_2_blobby_keyboard_right");
+	mLeft2Keyboard[IA_JUMP] = mOptionConfig.getString("left_2_blobby_keyboard_jump");
+	mLeft2Joystick[IA_LEFT] = mOptionConfig.getString("left_2_blobby_joystick_left");
+	mLeft2Joystick[IA_RIGHT] = mOptionConfig.getString("left_2_blobby_joystick_right");
+	mLeft2Joystick[IA_JUMP] = mOptionConfig.getString("left_2_blobby_joystick_jump");
+	//right data:
+	mRight2Device = mOptionConfig.getString("right_2_blobby_device");
+	mRight2MouseJumpbutton = mOptionConfig.getInteger("right_2_blobby_mouse_jumpbutton");
+	mRight2MouseSensitivity = mOptionConfig.getFloat("right_2_blobby_mouse_sensitivity");
+	mRight2Keyboard[IA_LEFT] = mOptionConfig.getString("right_2_blobby_keyboard_left");
+	mRight2Keyboard[IA_RIGHT] = mOptionConfig.getString("right_2_blobby_keyboard_right");
+	mRight2Keyboard[IA_JUMP] = mOptionConfig.getString("right_2_blobby_keyboard_jump");
+	mRight2Joystick[IA_LEFT] = mOptionConfig.getString("right_2_blobby_joystick_left");
+	mRight2Joystick[IA_RIGHT] = mOptionConfig.getString("right_2_blobby_joystick_right");
+	mRight2Joystick[IA_JUMP] = mOptionConfig.getString("right_2_blobby_joystick_jump");
+
 	//global data:
 	mBlobbyTouchType = mOptionConfig.getInteger("blobby_touch_type");
 }
@@ -449,6 +471,28 @@ void InputOptionsState::save()
 	mOptionConfig.setString("right_blobby_joystick_left", mRightJoystick[IA_LEFT]);
 	mOptionConfig.setString("right_blobby_joystick_right", mRightJoystick[IA_RIGHT]);
 	mOptionConfig.setString("right_blobby_joystick_jump", mRightJoystick[IA_JUMP]);
+
+	//left data:
+	mOptionConfig.setString("left_2_blobby_device", mLeft2Device);
+	mOptionConfig.setInteger("left_2_blobby_mouse_jumpbutton", mLeft2MouseJumpbutton);
+	mOptionConfig.setFloat("left_2_blobby_mouse_sensitivity", mLeft2MouseSensitivity);
+	mOptionConfig.setString("left_2_blobby_keyboard_left", mLeft2Keyboard[IA_LEFT]);
+	mOptionConfig.setString("left_2_blobby_keyboard_right", mLeft2Keyboard[IA_RIGHT]);
+	mOptionConfig.setString("left_2_blobby_keyboard_jump", mLeft2Keyboard[IA_JUMP]);
+	mOptionConfig.setString("left_2_blobby_joystick_left", mLeft2Joystick[IA_LEFT]);
+	mOptionConfig.setString("left_2_blobby_joystick_right", mLeft2Joystick[IA_RIGHT]);
+	mOptionConfig.setString("left_2_blobby_joystick_jump", mLeft2Joystick[IA_JUMP]);
+	//right data:
+	mOptionConfig.setString("right_2_blobby_device", mRight2Device);
+	mOptionConfig.setInteger("right_2_blobby_mouse_jumpbutton", mRight2MouseJumpbutton);
+	mOptionConfig.setFloat("right_2_blobby_mouse_sensitivity", mRight2MouseSensitivity);
+	mOptionConfig.setString("right_2_blobby_keyboard_left", mRight2Keyboard[IA_LEFT]);
+	mOptionConfig.setString("right_2_blobby_keyboard_right", mRight2Keyboard[IA_RIGHT]);
+	mOptionConfig.setString("right_2_blobby_keyboard_jump", mRight2Keyboard[IA_JUMP]);
+	mOptionConfig.setString("right_2_blobby_joystick_left", mRight2Joystick[IA_LEFT]);
+	mOptionConfig.setString("right_2_blobby_joystick_right", mRight2Joystick[IA_RIGHT]);
+	mOptionConfig.setString("right_2_blobby_joystick_jump", mRight2Joystick[IA_JUMP]);
+
 	//global data:
 	mOptionConfig.setInteger("blobby_touch_type", mBlobbyTouchType);
 
@@ -470,6 +514,12 @@ void InputOptionsState::step_impl()
 
 	//right player side:
 	handlePlayerInput(RIGHT_PLAYER, lastActionKey, mRightMouseJumpbutton, mRightKeyboard, mRightJoystick);
+
+	// left player side:
+	handlePlayerInput(LEFT_PLAYER_2, lastActionKey, mLeft2MouseJumpbutton, mLeft2Keyboard, mLeft2Joystick);
+
+	//right player side:
+	handlePlayerInput(RIGHT_PLAYER_2, lastActionKey, mRight2MouseJumpbutton, mRight2Keyboard, mRight2Joystick);
 
 	//check if a capture window is open, to set all widgets inactive:
 	if (mLeftKeyboard[IA_LEFT] != "" && mLeftKeyboard[IA_RIGHT] != "" && mLeftKeyboard[IA_JUMP] != "" && mLeftJoystick[IA_LEFT] != "" &&
