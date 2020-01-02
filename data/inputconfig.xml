@@ -19,24 +19,24 @@
 	<var name="right_blobby_joystick_left" value="joy_0_button_0"/>
 	<var name="right_blobby_joystick_right" value="joy_0_button_1"/>
 	<var name="right_blobby_joystick_jump" value="joy_0_button_2"/>
-  <var name="left_2_blobby_device" value="keyboard"/>
-  <var name="left_2_blobby_mouse_jumpbutton" value="1"/>
-  <var name="left_2_blobby_mouse_sensitivity" value="1.000000"/>
-  <var name="left_2_blobby_keyboard_left" value="c"/>
-  <var name="left_2_blobby_keyboard_right" value="b"/>
-  <var name="left_2_blobby_keyboard_jump" value="v"/>
-  <var name="left_2_blobby_joystick_left" value="joy_1_axis_-1"/>
-  <var name="left_2_blobby_joystick_right" value="joy_1_axis_1"/>
-  <var name="left_2_blobby_joystick_jump" value="joy_1_axis_2"/>
-  <var name="right_2_blobby_device" value="keyboard"/>
-  <var name="right_2_blobby_mouse_jumpbutton" value="1"/>
-  <var name="right_2_blobby_mouse_sensitivity" value="1.000000"/>
-  <var name="right_2_blobby_keyboard_left" value="j"/>
-  <var name="right_2_blobby_keyboard_right" value="l"/>
-  <var name="right_2_blobby_keyboard_jump" value="i"/>
-  <var name="right_2_blobby_joystick_left" value="joy_2_button_0"/>
-  <var name="right_2_blobby_joystick_right" value="joy_2_button_1"/>
-  <var name="right_2_blobby_joystick_jump" value="joy_2_button_2"/>
+	<var name="left_2_blobby_device" value="keyboard"/>
+	<var name="left_2_blobby_mouse_jumpbutton" value="1"/>
+	<var name="left_2_blobby_mouse_sensitivity" value="1.000000"/>
+	<var name="left_2_blobby_keyboard_left" value="c"/>
+	<var name="left_2_blobby_keyboard_right" value="b"/>
+	<var name="left_2_blobby_keyboard_jump" value="v"/>
+	<var name="left_2_blobby_joystick_left" value="joy_1_axis_-1"/>
+	<var name="left_2_blobby_joystick_right" value="joy_1_axis_1"/>
+	<var name="left_2_blobby_joystick_jump" value="joy_1_axis_2"/>
+	<var name="right_2_blobby_device" value="keyboard"/>
+	<var name="right_2_blobby_mouse_jumpbutton" value="1"/>
+	<var name="right_2_blobby_mouse_sensitivity" value="1.000000"/>
+	<var name="right_2_blobby_keyboard_left" value="j"/>
+	<var name="right_2_blobby_keyboard_right" value="l"/>
+	<var name="right_2_blobby_keyboard_jump" value="i"/>
+	<var name="right_2_blobby_joystick_left" value="joy_2_button_0"/>
+	<var name="right_2_blobby_joystick_right" value="joy_2_button_1"/>
+	<var name="right_2_blobby_joystick_jump" value="joy_2_button_2"/>
 	<var name="blobby_touch_type" value="0"/>
 </userconfig>
 

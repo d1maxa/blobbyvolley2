@@ -49,6 +49,30 @@ private:
 	unsigned mBotStrength[MAX_PLAYERS];
 };
 
+/*! \class OptionPlusState
+	\brief State for managing the options menu for additional players
+*/
+class OptionPlusState : public State
+{
+public:
+	OptionPlusState(std::vector<std::string> scriptNames);
+	virtual ~OptionPlusState();
+	virtual void step_impl();
+	virtual const char* getStateName() const;
+
+private:
+	/// writes current settings to disk
+	void save();
+
+	UserConfig mOptionConfig;
+	std::vector<std::string> mScriptNames;
+	bool mPlayerEnabled[MAX_PLAYERS];
+	unsigned mPlayerOptions[MAX_PLAYERS];
+	std::string mPlayerName[MAX_PLAYERS];
+	unsigned mPlayerNamePosition[MAX_PLAYERS];
+	unsigned mBotStrength[MAX_PLAYERS];
+};
+
 /*! \class GraphicOptionsState
 	\brief State for managing the graphics options menu
 */
@@ -71,14 +95,33 @@ private:
 	bool mShowShadow;
 };
 
+/*! \class GraphicOptionsPlusState
+	\brief State for managing the graphics options menu for additional players
+*/
+class GraphicOptionsPlusState : public State
+{
+public:
+	GraphicOptionsPlusState();
+	virtual ~GraphicOptionsPlusState();
+	virtual void step_impl();
+	virtual const char* getStateName() const;
+private:
+	/// writes current settings to disk
+	void save();
+
+	UserConfig mOptionConfig;	
+	int mR1, mG1, mB1, mR2, mG2, mB2;
+	bool mLeftMorphing, mRightMorphing;	
+};
+
 /*! \class InputOptionsState
 	\brief State for managing the input options menu
 */
 class InputOptionsState : public State
 {
 public:
-	InputOptionsState();
-	virtual ~InputOptionsState();
+	InputOptionsState(bool primary);
+	virtual ~InputOptionsState();	
 	virtual void step_impl();
 	virtual const char* getStateName() const;
 private:
@@ -91,14 +134,16 @@ private:
 		IA_COUNT
 	};
 
+	bool checkKeys(std::string keys[IA_COUNT]);
 	/// writes current settings to disk
 	void save();
 
+	bool mPrimary;
 	UserConfig mOptionConfig;
 	std::string oldString;
 	int mOldInteger;
 	std::string mOldString;
-
+		
 	int mSetKeyboard; // 1-10 for LeftKeyboard | 11-20 for RightKeyboard
 	//left data:
 	std::string mLeftDevice;
@@ -114,19 +159,8 @@ private:
 	std::string mRightKeyboard[IA_COUNT];
 	std::string mRightJoystick[IA_COUNT];
 
-	//left data:
 	std::string mLeft2Device;
-	int mLeft2MouseJumpbutton;
-	float mLeft2MouseSensitivity;
-	/// \todo maybe use a struct here
-	std::string mLeft2Keyboard[IA_COUNT];
-	std::string mLeft2Joystick[IA_COUNT];
-	//right data:
 	std::string mRight2Device;
-	int mRight2MouseJumpbutton;
-	float mRight2MouseSensitivity;
-	std::string mRight2Keyboard[IA_COUNT];
-	std::string mRight2Joystick[IA_COUNT];
 
 	//global data:
 	int mBlobbyTouchType;

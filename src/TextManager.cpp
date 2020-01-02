@@ -231,8 +231,11 @@ void TextManager::setDefault()
 	mStrings[OP_TOUCH_ARROWS] = "arrow keys";
 	mStrings[OP_TOUCH_DIRECT] = "blobby follows finger";
 	mStrings[OP_INPUT_OP] = "input options";
+	mStrings[OP_INPUT_OP_PLUS] = "input options+";
 	mStrings[OP_GFX_OP] = "graphic options";
+	mStrings[OP_GFX_OP_PLUS] = "graphic opts+";
 	mStrings[OP_MISC] = "misc options";
+	mStrings[OP_PLUS] = "player opts+";
 	mStrings[OP_VIDEO] = "video settings";
 	mStrings[OP_FULLSCREEN] = "fullscreen mode";
 	mStrings[OP_WINDOW] = "window mode";
@@ -241,8 +244,8 @@ void TextManager::setDefault()
 	mStrings[OP_BLOB_COLORS] = "blob colors";
 	mStrings[OP_LEFT_PLAYER] = "left player";
 	mStrings[OP_RIGHT_PLAYER] = "right player";
-	mStrings[OP_LEFT_PLAYER2] = "left player 2";
-	mStrings[OP_RIGHT_PLAYER2] = "right player 2";
+	mStrings[OP_LEFT_PLAYER_2] = "left player 2";
+	mStrings[OP_RIGHT_PLAYER_2] = "right player 2";
 	mStrings[OP_RED] = "red";
 	mStrings[OP_GREEN] = "green";
 	mStrings[OP_BLUE] = "blue";
@@ -283,6 +286,7 @@ void TextManager::setDefault()
 	mStrings[OP_MEDIUM] = "medium";
 	mStrings[OP_STRONG] = "strong";
 	mStrings[OP_RULES] = "rules:";
+	mStrings[OP_ENABLED] = "enabled";
 
 	mStrings[UPDATE_NOTIFICATION] = "please visit http://blobby.sourceforge.net/ for a new version of blobby volley";
 }

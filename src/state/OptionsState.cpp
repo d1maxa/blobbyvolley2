@@ -124,14 +124,14 @@ void OptionState::step_impl()
 
 	float f = 1.f - (float)mBotStrength[0] / MAX_BOT_DELAY;
 	imgui.doScrollbar(GEN_ID, Vector2(15.0, 350.0), f);
-	mBotStrength[0] = static_cast<unsigned int> ((1.f-f) * MAX_BOT_DELAY + 0.5f);
+	mBotStrength[LEFT_PLAYER] = static_cast<unsigned int> ((1.f-f) * MAX_BOT_DELAY + 0.5f);
 	imgui.doText(GEN_ID, Vector2(235.0, 350.0), f > 0.66 ? TextManager::OP_STRONG :
 											 	(f > 0.33 ? TextManager::OP_MEDIUM:
 												TextManager::OP_WEAK));
 
 	f = 1.f - (float)mBotStrength[1] / MAX_BOT_DELAY;
 	imgui.doScrollbar(GEN_ID, Vector2(440.0, 350.0), f);
-	mBotStrength[1] = static_cast<unsigned int> ((1.f - f) * MAX_BOT_DELAY + 0.5f);
+	mBotStrength[RIGHT_PLAYER] = static_cast<unsigned int> ((1.f - f) * MAX_BOT_DELAY + 0.5f);
 	imgui.doText(GEN_ID, Vector2(660.0, 350.0), f > 0.66 ? TextManager::OP_STRONG :
 											 	(f > 0.33 ? TextManager::OP_MEDIUM:
 												TextManager::OP_WEAK));
@@ -139,7 +139,13 @@ void OptionState::step_impl()
 	if (imgui.doButton(GEN_ID, Vector2(40.0, 390.0), TextManager::OP_INPUT_OP))
 	{
 		save();
-		switchState(new InputOptionsState());
+		switchState(new InputOptionsState(true));
+	}
+	
+	if (imgui.doButton(GEN_ID, Vector2(440.0, 390.0), TextManager::OP_INPUT_OP_PLUS))
+	{
+		save();
+		switchState(new InputOptionsState(false));
 	}
 
 	if (imgui.doButton(GEN_ID, Vector2(40.0, 430.0), TextManager::OP_GFX_OP))
@@ -147,10 +153,20 @@ void OptionState::step_impl()
 		save();
 		switchState(new GraphicOptionsState());
 	}
+	if (imgui.doButton(GEN_ID, Vector2(440.0, 430.0), TextManager::OP_GFX_OP_PLUS))
+	{
+		save();
+		switchState(new GraphicOptionsPlusState());
+	}
 	if (imgui.doButton(GEN_ID, Vector2(40.0, 470.0), TextManager::OP_MISC))
 	{
 		save();
 		switchState(new MiscOptionsState());
+	}
+	if (imgui.doButton(GEN_ID, Vector2(440.0, 470.0), TextManager::OP_PLUS))
+	{
+		save();
+		switchState(new OptionPlusState(mScriptNames));
 	}
 
 	if (imgui.doButton(GEN_ID, Vector2(224.0, 530.0), TextManager::LBL_OK))
@@ -167,6 +183,150 @@ void OptionState::step_impl()
 const char* OptionState::getStateName() const
 {
 	return "OptionState";
+}
+
+OptionPlusState::OptionPlusState(std::vector<std::string> scriptNames)
+{
+	mOptionConfig.loadFile("config.xml");
+	mPlayerOptions[LEFT_PLAYER_2] = 0;
+	mPlayerOptions[RIGHT_PLAYER_2] = 0;
+	std::string leftScript = mOptionConfig.getString("left_2_script_name");
+	std::string rightScript = mOptionConfig.getString("right_2_script_name");
+
+	/*
+	mScriptNames = FileSystem::getSingleton().enumerateFiles("scripts", ".lua");
+	// hack. we cant use something like push_front, though
+	mScriptNames.push_back("Human");
+	std::swap(mScriptNames[0], mScriptNames[mScriptNames.size() - 1]);
+	*/
+	mScriptNames = scriptNames;
+
+	for (unsigned int i = 0; i < mScriptNames.size(); ++i)
+	{
+		if (mScriptNames[i] == leftScript)
+			mPlayerOptions[LEFT_PLAYER_2] = i;
+		if (mScriptNames[i] == rightScript)
+			mPlayerOptions[RIGHT_PLAYER_2] = i;
+	}
+	
+	if (mOptionConfig.getBool("left_2_player_human"))
+		mPlayerOptions[LEFT_PLAYER_2] = 0;
+	if (mOptionConfig.getBool("right_2_player_human"))
+		mPlayerOptions[RIGHT_PLAYER_2] = 0;
+
+	mPlayerName[LEFT_PLAYER_2] = mOptionConfig.getString("left_2_player_name");
+	mPlayerName[RIGHT_PLAYER_2] = mOptionConfig.getString("right_2_player_name");
+	mPlayerNamePosition[LEFT_PLAYER_2] = 0;
+	mPlayerNamePosition[RIGHT_PLAYER_2] = 0;	
+
+	mBotStrength[LEFT_PLAYER_2] = mOptionConfig.getInteger("left_2_script_strength");
+	mBotStrength[RIGHT_PLAYER_2] = mOptionConfig.getInteger("right_2_script_strength");
+
+	mPlayerEnabled[LEFT_PLAYER_2] = mOptionConfig.getBool("left_2_player_enabled");
+	mPlayerEnabled[RIGHT_PLAYER_2] = mOptionConfig.getBool("right_2_player_enabled");
+}
+
+OptionPlusState::~OptionPlusState()
+{
+}
+
+void OptionPlusState::save()
+{
+	if (mPlayerOptions[LEFT_PLAYER_2] == 0)
+	{
+		mOptionConfig.setBool("left_2_player_human", true);
+	}
+	else
+	{
+		mOptionConfig.setBool("left_2_player_human", false);
+		mOptionConfig.setString("left_2_script_name", mScriptNames[mPlayerOptions[LEFT_PLAYER_2]]);
+	}
+
+	if (mPlayerOptions[RIGHT_PLAYER_2] == 0)
+	{
+		mOptionConfig.setBool("right_2_player_human", true);
+	}
+	else
+	{
+		mOptionConfig.setBool("right_2_player_human", false);
+		mOptionConfig.setString("right_2_script_name", mScriptNames[mPlayerOptions[RIGHT_PLAYER_2]]);
+	}
+	mOptionConfig.setString("left_2_player_name", mPlayerName[LEFT_PLAYER_2]);
+	mOptionConfig.setString("right_2_player_name", mPlayerName[RIGHT_PLAYER_2]);
+	mOptionConfig.setInteger("left_2_script_strength", mBotStrength[LEFT_PLAYER_2]);
+	mOptionConfig.setInteger("right_2_script_strength", mBotStrength[RIGHT_PLAYER_2]);
+
+	mOptionConfig.setBool("left_2_player_enabled", mPlayerEnabled[LEFT_PLAYER_2]);
+	mOptionConfig.setBool("right_2_player_enabled", mPlayerEnabled[RIGHT_PLAYER_2]);
+
+	mOptionConfig.saveFile("config.xml");
+}
+
+void OptionPlusState::step_impl()
+{
+	const int MAX_BOT_DELAY = 25;		// 25 frames = 0.33s (gamespeed: normal)
+
+	IMGUI& imgui = IMGUI::getSingleton();
+	imgui.doCursor();
+	imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
+	imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
+
+	imgui.doEditbox(GEN_ID, Vector2(5.0, 10.0), 15, mPlayerName[LEFT_PLAYER_2], mPlayerNamePosition[LEFT_PLAYER_2]);
+	imgui.doEditbox(GEN_ID, Vector2(425.0, 10.0), 15, mPlayerName[RIGHT_PLAYER_2], mPlayerNamePosition[RIGHT_PLAYER_2]);
+
+	imgui.doSelectbox(GEN_ID, Vector2(5.0, 50.0), Vector2(375.0, 300.0), mScriptNames, mPlayerOptions[LEFT_PLAYER_2]);
+	imgui.doSelectbox(GEN_ID, Vector2(425.0, 50.0), Vector2(795.0, 300.0), mScriptNames, mPlayerOptions[RIGHT_PLAYER_2]);
+
+	imgui.doText(GEN_ID, Vector2(270.0, 310.0), TextManager::OP_DIFFICULTY);
+
+	float f = 1.f - (float)mBotStrength[0] / MAX_BOT_DELAY;
+	imgui.doScrollbar(GEN_ID, Vector2(15.0, 350.0), f);
+	mBotStrength[LEFT_PLAYER_2] = static_cast<unsigned int> ((1.f - f) * MAX_BOT_DELAY + 0.5f);
+	imgui.doText(GEN_ID, Vector2(235.0, 350.0), f > 0.66 ? TextManager::OP_STRONG :
+		(f > 0.33 ? TextManager::OP_MEDIUM :
+			TextManager::OP_WEAK));
+
+	f = 1.f - (float)mBotStrength[1] / MAX_BOT_DELAY;
+	imgui.doScrollbar(GEN_ID, Vector2(440.0, 350.0), f);
+	mBotStrength[RIGHT_PLAYER_2] = static_cast<unsigned int> ((1.f - f) * MAX_BOT_DELAY + 0.5f);
+	imgui.doText(GEN_ID, Vector2(660.0, 350.0), f > 0.66 ? TextManager::OP_STRONG :
+		(f > 0.33 ? TextManager::OP_MEDIUM :
+			TextManager::OP_WEAK));
+
+	imgui.doText(GEN_ID, Vector2(34.0, 390), TextManager::OP_ENABLED);
+	if (imgui.doButton(GEN_ID, Vector2(72.0, 420), TextManager::LBL_YES))
+		mPlayerEnabled[LEFT_PLAYER_2] = true;
+	if (imgui.doButton(GEN_ID, Vector2(220.0, 420), TextManager::LBL_NO))
+		mPlayerEnabled[LEFT_PLAYER_2] = false;
+	if (mPlayerEnabled[LEFT_PLAYER_2])
+		imgui.doImage(GEN_ID, Vector2(54.0, 432.0), "gfx/pfeil_rechts.bmp");
+	else
+		imgui.doImage(GEN_ID, Vector2(204.0, 432.0), "gfx/pfeil_rechts.bmp");
+
+	imgui.doText(GEN_ID, Vector2(434.0, 390), TextManager::OP_ENABLED);
+	if (imgui.doButton(GEN_ID, Vector2(472.0, 420), TextManager::LBL_YES))
+		mPlayerEnabled[RIGHT_PLAYER_2] = true;
+	if (imgui.doButton(GEN_ID, Vector2(620.0, 420), TextManager::LBL_NO))
+		mPlayerEnabled[RIGHT_PLAYER_2] = false;
+	if (mPlayerEnabled[RIGHT_PLAYER_2])
+		imgui.doImage(GEN_ID, Vector2(454.0, 432.0), "gfx/pfeil_rechts.bmp");
+	else
+		imgui.doImage(GEN_ID, Vector2(604.0, 432.0), "gfx/pfeil_rechts.bmp");
+	
+	if (imgui.doButton(GEN_ID, Vector2(224.0, 530.0), TextManager::LBL_OK))
+	{
+		save();
+		switchState(new OptionState());
+	}
+	if (imgui.doButton(GEN_ID, Vector2(424.0, 530.0), TextManager::LBL_CANCEL))
+	{
+		switchState(new OptionState());
+	}
+}
+
+const char* OptionPlusState::getStateName() const
+{
+	return "OptionPlusState";
 }
 
 GraphicOptionsState::GraphicOptionsState()
@@ -395,106 +555,304 @@ const char* GraphicOptionsState::getStateName() const
 	return "GraphicOptionsState";
 }
 
-InputOptionsState::InputOptionsState()
+GraphicOptionsPlusState::GraphicOptionsPlusState()
 {
+	mOptionConfig.loadFile("config.xml");	
+	mR1 = mOptionConfig.getInteger("left_2_blobby_color_r");
+	mG1 = mOptionConfig.getInteger("left_2_blobby_color_g");
+	mB1 = mOptionConfig.getInteger("left_2_blobby_color_b");
+	mR2 = mOptionConfig.getInteger("right_2_blobby_color_r");
+	mG2 = mOptionConfig.getInteger("right_2_blobby_color_g");
+	mB2 = mOptionConfig.getInteger("right_2_blobby_color_b");
+	mLeftMorphing = mOptionConfig.getBool("left_2_blobby_oscillate");
+	mRightMorphing = mOptionConfig.getBool("right_2_blobby_oscillate");	
+}
+
+GraphicOptionsPlusState::~GraphicOptionsPlusState()
+{
+}
+
+void GraphicOptionsPlusState::save()
+{
+	mOptionConfig.setInteger("left_2_blobby_color_r", mR1);
+	mOptionConfig.setInteger("left_2_blobby_color_g", mG1);
+	mOptionConfig.setInteger("left_2_blobby_color_b", mB1);
+	mOptionConfig.setInteger("right_2_blobby_color_r", mR2);
+	mOptionConfig.setInteger("right_2_blobby_color_g", mG2);
+	mOptionConfig.setInteger("right_2_blobby_color_b", mB2);
+	mOptionConfig.setBool("left_2_blobby_oscillate", mLeftMorphing);
+	mOptionConfig.setBool("right_2_blobby_oscillate", mRightMorphing);
+
+	mOptionConfig.saveFile("config.xml");
+}
+
+void GraphicOptionsPlusState::step_impl()
+{
+	IMGUI& imgui = IMGUI::getSingleton();
+	imgui.doCursor();
+	imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
+	imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
+		
+	float heightOfElement = 10.0;
+
+#if __MOBILE__
+	float standardLineHeight = 50.0;
+#else
+	float standardLineHeight = 30.0;
+#endif
+
+	//heightOfElement += standardLineHeight;
+
+	//Blob colors:
+	imgui.doText(GEN_ID, Vector2(280.0, heightOfElement), TextManager::OP_BLOB_COLORS);
+	heightOfElement += 40.0;
+
+	float playerColorSettingsHeight = heightOfElement;
+
+	//left blob:
+	imgui.doText(GEN_ID, Vector2(34.0, heightOfElement), TextManager::OP_LEFT_PLAYER_2);
+
+	heightOfElement += standardLineHeight;
+
+	{
+		imgui.doText(GEN_ID, Vector2(34.0, heightOfElement), TextManager::OP_RED);
+		float r1 = (float)mR1 / 255;
+		imgui.doScrollbar(GEN_ID, Vector2(160.0, heightOfElement), r1);
+		mR1 = (int)(r1 * 255);
+	}
+
+	heightOfElement += standardLineHeight;
+
+	{
+		imgui.doText(GEN_ID, Vector2(34.0, heightOfElement), TextManager::OP_GREEN);
+		float g1 = (float)mG1 / 255;
+		imgui.doScrollbar(GEN_ID, Vector2(160.0, heightOfElement), g1);
+		mG1 = (int)(g1 * 255);
+	}
+
+	heightOfElement += standardLineHeight;
+
+	{
+		imgui.doText(GEN_ID, Vector2(34.0, heightOfElement), TextManager::OP_BLUE);
+		float b1 = (float)mB1 / 255;
+		imgui.doScrollbar(GEN_ID, Vector2(160.0, heightOfElement), b1);
+		mB1 = (int)(b1 * 255);
+	}
+	imgui.doText(GEN_ID, Vector2(34.0, 360), TextManager::OP_MORPHING);
+	if (imgui.doButton(GEN_ID, Vector2(72.0, 390), TextManager::LBL_YES))
+		mLeftMorphing = true;
+	if (imgui.doButton(GEN_ID, Vector2(220.0, 390), TextManager::LBL_NO))
+		mLeftMorphing = false;
+	if (mLeftMorphing)
+		imgui.doImage(GEN_ID, Vector2(54.0, 402.0), "gfx/pfeil_rechts.bmp");
+	else
+		imgui.doImage(GEN_ID, Vector2(204.0, 402.0), "gfx/pfeil_rechts.bmp");
+	//draw left blob:
+	{
+		float time = float(SDL_GetTicks()) / 1000.0;
+		Color ourCol = Color(mR1, mG1, mB1);
+		if (mLeftMorphing)
+			ourCol = Color(int((sin(time * 2) + 1.0) * 128),
+				int((sin(time * 4) + 1.0) * 128),
+				int((sin(time * 3) + 1.0) * 128));
+		imgui.doBlob(GEN_ID, Vector2(110, 500), ourCol);
+	}
+
+	//right blob:
+	heightOfElement = playerColorSettingsHeight;
+
+	imgui.doText(GEN_ID, Vector2(434.0, heightOfElement), TextManager::OP_RIGHT_PLAYER_2);
+
+	heightOfElement += standardLineHeight;
+
+	{
+		imgui.doText(GEN_ID, Vector2(434.0, heightOfElement), TextManager::OP_RED);
+		float r2 = (float)mR2 / 255;
+		imgui.doScrollbar(GEN_ID, Vector2(560.0, heightOfElement), r2);
+		mR2 = (int)(r2 * 255);
+	}
+
+	heightOfElement += standardLineHeight;
+
+	{
+		imgui.doText(GEN_ID, Vector2(434.0, heightOfElement), TextManager::OP_GREEN);
+		float g2 = (float)mG2 / 255;
+		imgui.doScrollbar(GEN_ID, Vector2(560.0, heightOfElement), g2);
+		mG2 = (int)(g2 * 255);
+	}
+
+	heightOfElement += standardLineHeight;
+
+	{
+		imgui.doText(GEN_ID, Vector2(434.0, heightOfElement), TextManager::OP_BLUE);
+		float b2 = (float)mB2 / 255;
+		imgui.doScrollbar(GEN_ID, Vector2(560.0, heightOfElement), b2);
+		mB2 = (int)(b2 * 255);
+	}
+	imgui.doText(GEN_ID, Vector2(434.0, 360), TextManager::OP_MORPHING);
+	if (imgui.doButton(GEN_ID, Vector2(472.0, 390), TextManager::LBL_YES))
+		mRightMorphing = true;
+	if (imgui.doButton(GEN_ID, Vector2(620.0, 390), TextManager::LBL_NO))
+		mRightMorphing = false;
+	if (mRightMorphing)
+		imgui.doImage(GEN_ID, Vector2(454.0, 402.0), "gfx/pfeil_rechts.bmp");
+	else
+		imgui.doImage(GEN_ID, Vector2(604.0, 402.0), "gfx/pfeil_rechts.bmp");
+	//draw right blob:
+	{
+		float time = float(SDL_GetTicks()) / 1000.0;
+		Color ourCol = Color(mR2, mG2, mB2);
+		if (mRightMorphing)
+			ourCol = Color(int((cos(time * 2) + 1.0) * 128),
+				int((cos(time * 4) + 1.0) * 128),
+				int((cos(time * 3) + 1.0) * 128));
+		imgui.doBlob(GEN_ID, Vector2(670, 500), ourCol);
+	}
+
+	if (imgui.doButton(GEN_ID, Vector2(224.0, 530.0), TextManager::LBL_OK))
+	{
+		save();
+		switchState(new OptionState());
+	}
+	if (imgui.doButton(GEN_ID, Vector2(424.0, 530.0), TextManager::LBL_CANCEL))
+	{
+		switchState(new OptionState());
+	}
+}
+
+const char* GraphicOptionsPlusState::getStateName() const
+{
+	return "GraphicOptionsPlusState";
+}
+
+InputOptionsState::InputOptionsState(bool primary)
+{
+	mPrimary = primary;
 	mSetKeyboard = 0;
 	mOptionConfig.loadFile("inputconfig.xml");
-	//left data:
-	mLeftDevice = mOptionConfig.getString("left_blobby_device");
-	mLeftMouseJumpbutton = mOptionConfig.getInteger("left_blobby_mouse_jumpbutton");
-	mLeftMouseSensitivity = mOptionConfig.getFloat("left_blobby_mouse_sensitivity");
-	mLeftKeyboard[IA_LEFT] = mOptionConfig.getString("left_blobby_keyboard_left");
-	mLeftKeyboard[IA_RIGHT] = mOptionConfig.getString("left_blobby_keyboard_right");
-	mLeftKeyboard[IA_JUMP] = mOptionConfig.getString("left_blobby_keyboard_jump");
-	mLeftJoystick[IA_LEFT] = mOptionConfig.getString("left_blobby_joystick_left");
-	mLeftJoystick[IA_RIGHT] = mOptionConfig.getString("left_blobby_joystick_right");
-	mLeftJoystick[IA_JUMP] = mOptionConfig.getString("left_blobby_joystick_jump");
-	//right data:
-	mRightDevice = mOptionConfig.getString("right_blobby_device");
-	mRightMouseJumpbutton = mOptionConfig.getInteger("right_blobby_mouse_jumpbutton");
-	mRightMouseSensitivity = mOptionConfig.getFloat("right_blobby_mouse_sensitivity");
-	mRightKeyboard[IA_LEFT] = mOptionConfig.getString("right_blobby_keyboard_left");
-	mRightKeyboard[IA_RIGHT] = mOptionConfig.getString("right_blobby_keyboard_right");
-	mRightKeyboard[IA_JUMP] = mOptionConfig.getString("right_blobby_keyboard_jump");
-	mRightJoystick[IA_LEFT] = mOptionConfig.getString("right_blobby_joystick_left");
-	mRightJoystick[IA_RIGHT] = mOptionConfig.getString("right_blobby_joystick_right");
-	mRightJoystick[IA_JUMP] = mOptionConfig.getString("right_blobby_joystick_jump");
+	if (primary)
+	{
+		//left data:
+		mLeftDevice = mOptionConfig.getString("left_blobby_device");
+		mLeftMouseJumpbutton = mOptionConfig.getInteger("left_blobby_mouse_jumpbutton");
+		mLeftMouseSensitivity = mOptionConfig.getFloat("left_blobby_mouse_sensitivity");
+		mLeftKeyboard[IA_LEFT] = mOptionConfig.getString("left_blobby_keyboard_left");
+		mLeftKeyboard[IA_RIGHT] = mOptionConfig.getString("left_blobby_keyboard_right");
+		mLeftKeyboard[IA_JUMP] = mOptionConfig.getString("left_blobby_keyboard_jump");
+		mLeftJoystick[IA_LEFT] = mOptionConfig.getString("left_blobby_joystick_left");
+		mLeftJoystick[IA_RIGHT] = mOptionConfig.getString("left_blobby_joystick_right");
+		mLeftJoystick[IA_JUMP] = mOptionConfig.getString("left_blobby_joystick_jump");
+		//right data:
+		mRightDevice = mOptionConfig.getString("right_blobby_device");
+		mRightMouseJumpbutton = mOptionConfig.getInteger("right_blobby_mouse_jumpbutton");
+		mRightMouseSensitivity = mOptionConfig.getFloat("right_blobby_mouse_sensitivity");
+		mRightKeyboard[IA_LEFT] = mOptionConfig.getString("right_blobby_keyboard_left");
+		mRightKeyboard[IA_RIGHT] = mOptionConfig.getString("right_blobby_keyboard_right");
+		mRightKeyboard[IA_JUMP] = mOptionConfig.getString("right_blobby_keyboard_jump");
+		mRightJoystick[IA_LEFT] = mOptionConfig.getString("right_blobby_joystick_left");
+		mRightJoystick[IA_RIGHT] = mOptionConfig.getString("right_blobby_joystick_right");
+		mRightJoystick[IA_JUMP] = mOptionConfig.getString("right_blobby_joystick_jump");
 
-	//left data:
-	mLeft2Device = mOptionConfig.getString("left_2_blobby_device");
-	mLeft2MouseJumpbutton = mOptionConfig.getInteger("left_2_blobby_mouse_jumpbutton");
-	mLeft2MouseSensitivity = mOptionConfig.getFloat("left_2_blobby_mouse_sensitivity");
-	mLeft2Keyboard[IA_LEFT] = mOptionConfig.getString("left_2_blobby_keyboard_left");
-	mLeft2Keyboard[IA_RIGHT] = mOptionConfig.getString("left_2_blobby_keyboard_right");
-	mLeft2Keyboard[IA_JUMP] = mOptionConfig.getString("left_2_blobby_keyboard_jump");
-	mLeft2Joystick[IA_LEFT] = mOptionConfig.getString("left_2_blobby_joystick_left");
-	mLeft2Joystick[IA_RIGHT] = mOptionConfig.getString("left_2_blobby_joystick_right");
-	mLeft2Joystick[IA_JUMP] = mOptionConfig.getString("left_2_blobby_joystick_jump");
-	//right data:
-	mRight2Device = mOptionConfig.getString("right_2_blobby_device");
-	mRight2MouseJumpbutton = mOptionConfig.getInteger("right_2_blobby_mouse_jumpbutton");
-	mRight2MouseSensitivity = mOptionConfig.getFloat("right_2_blobby_mouse_sensitivity");
-	mRight2Keyboard[IA_LEFT] = mOptionConfig.getString("right_2_blobby_keyboard_left");
-	mRight2Keyboard[IA_RIGHT] = mOptionConfig.getString("right_2_blobby_keyboard_right");
-	mRight2Keyboard[IA_JUMP] = mOptionConfig.getString("right_2_blobby_keyboard_jump");
-	mRight2Joystick[IA_LEFT] = mOptionConfig.getString("right_2_blobby_joystick_left");
-	mRight2Joystick[IA_RIGHT] = mOptionConfig.getString("right_2_blobby_joystick_right");
-	mRight2Joystick[IA_JUMP] = mOptionConfig.getString("right_2_blobby_joystick_jump");
+		//global data:
+		mBlobbyTouchType = mOptionConfig.getInteger("blobby_touch_type");
 
-	//global data:
-	mBlobbyTouchType = mOptionConfig.getInteger("blobby_touch_type");
+		mLeft2Device = mOptionConfig.getString("left_2_blobby_device");
+		mRight2Device = mOptionConfig.getString("right_2_blobby_device");
+	}
+	else
+	{
+		//left data:
+		mLeftDevice = mOptionConfig.getString("left_2_blobby_device");
+		mLeftMouseJumpbutton = mOptionConfig.getInteger("left_2_blobby_mouse_jumpbutton");
+		mLeftMouseSensitivity = mOptionConfig.getFloat("left_2_blobby_mouse_sensitivity");
+		mLeftKeyboard[IA_LEFT] = mOptionConfig.getString("left_2_blobby_keyboard_left");
+		mLeftKeyboard[IA_RIGHT] = mOptionConfig.getString("left_2_blobby_keyboard_right");
+		mLeftKeyboard[IA_JUMP] = mOptionConfig.getString("left_2_blobby_keyboard_jump");
+		mLeftJoystick[IA_LEFT] = mOptionConfig.getString("left_2_blobby_joystick_left");
+		mLeftJoystick[IA_RIGHT] = mOptionConfig.getString("left_2_blobby_joystick_right");
+		mLeftJoystick[IA_JUMP] = mOptionConfig.getString("left_2_blobby_joystick_jump");
+		//right data:
+		mRightDevice = mOptionConfig.getString("right_2_blobby_device");
+		mRightMouseJumpbutton = mOptionConfig.getInteger("right_2_blobby_mouse_jumpbutton");
+		mRightMouseSensitivity = mOptionConfig.getFloat("right_2_blobby_mouse_sensitivity");
+		mRightKeyboard[IA_LEFT] = mOptionConfig.getString("right_2_blobby_keyboard_left");
+		mRightKeyboard[IA_RIGHT] = mOptionConfig.getString("right_2_blobby_keyboard_right");
+		mRightKeyboard[IA_JUMP] = mOptionConfig.getString("right_2_blobby_keyboard_jump");
+		mRightJoystick[IA_LEFT] = mOptionConfig.getString("right_2_blobby_joystick_left");
+		mRightJoystick[IA_RIGHT] = mOptionConfig.getString("right_2_blobby_joystick_right");
+		mRightJoystick[IA_JUMP] = mOptionConfig.getString("right_2_blobby_joystick_jump");
+
+		mLeft2Device = mOptionConfig.getString("left_blobby_device");
+		mRight2Device = mOptionConfig.getString("right_blobby_device");
+	}	
 }
 
 InputOptionsState::~InputOptionsState()
 {
 }
 
+bool InputOptionsState::checkKeys(std::string keys[IA_COUNT])
+{
+	for (int i = 0; i < IA_COUNT; ++i)
+	{
+		if (keys[i] == "")
+			return false;
+	}
+
+	return true;
+}
+
 void InputOptionsState::save()
 {
-	//left data:
-	mOptionConfig.setString("left_blobby_device", mLeftDevice);
-	mOptionConfig.setInteger("left_blobby_mouse_jumpbutton", mLeftMouseJumpbutton);
-	mOptionConfig.setFloat("left_blobby_mouse_sensitivity", mLeftMouseSensitivity);
-	mOptionConfig.setString("left_blobby_keyboard_left", mLeftKeyboard[IA_LEFT]);
-	mOptionConfig.setString("left_blobby_keyboard_right", mLeftKeyboard[IA_RIGHT]);
-	mOptionConfig.setString("left_blobby_keyboard_jump", mLeftKeyboard[IA_JUMP]);
-	mOptionConfig.setString("left_blobby_joystick_left", mLeftJoystick[IA_LEFT]);
-	mOptionConfig.setString("left_blobby_joystick_right", mLeftJoystick[IA_RIGHT]);
-	mOptionConfig.setString("left_blobby_joystick_jump", mLeftJoystick[IA_JUMP]);
-	//right data:
-	mOptionConfig.setString("right_blobby_device", mRightDevice);
-	mOptionConfig.setInteger("right_blobby_mouse_jumpbutton", mRightMouseJumpbutton);
-	mOptionConfig.setFloat("right_blobby_mouse_sensitivity", mRightMouseSensitivity);
-	mOptionConfig.setString("right_blobby_keyboard_left", mRightKeyboard[IA_LEFT]);
-	mOptionConfig.setString("right_blobby_keyboard_right", mRightKeyboard[IA_RIGHT]);
-	mOptionConfig.setString("right_blobby_keyboard_jump", mRightKeyboard[IA_JUMP]);
-	mOptionConfig.setString("right_blobby_joystick_left", mRightJoystick[IA_LEFT]);
-	mOptionConfig.setString("right_blobby_joystick_right", mRightJoystick[IA_RIGHT]);
-	mOptionConfig.setString("right_blobby_joystick_jump", mRightJoystick[IA_JUMP]);
+	if (mPrimary)
+	{
+		//left data:
+		mOptionConfig.setString("left_blobby_device", mLeftDevice);
+		mOptionConfig.setInteger("left_blobby_mouse_jumpbutton", mLeftMouseJumpbutton);
+		mOptionConfig.setFloat("left_blobby_mouse_sensitivity", mLeftMouseSensitivity);
+		mOptionConfig.setString("left_blobby_keyboard_left", mLeftKeyboard[IA_LEFT]);
+		mOptionConfig.setString("left_blobby_keyboard_right", mLeftKeyboard[IA_RIGHT]);
+		mOptionConfig.setString("left_blobby_keyboard_jump", mLeftKeyboard[IA_JUMP]);
+		mOptionConfig.setString("left_blobby_joystick_left", mLeftJoystick[IA_LEFT]);
+		mOptionConfig.setString("left_blobby_joystick_right", mLeftJoystick[IA_RIGHT]);
+		mOptionConfig.setString("left_blobby_joystick_jump", mLeftJoystick[IA_JUMP]);
+		//right data:
+		mOptionConfig.setString("right_blobby_device", mRightDevice);
+		mOptionConfig.setInteger("right_blobby_mouse_jumpbutton", mRightMouseJumpbutton);
+		mOptionConfig.setFloat("right_blobby_mouse_sensitivity", mRightMouseSensitivity);
+		mOptionConfig.setString("right_blobby_keyboard_left", mRightKeyboard[IA_LEFT]);
+		mOptionConfig.setString("right_blobby_keyboard_right", mRightKeyboard[IA_RIGHT]);
+		mOptionConfig.setString("right_blobby_keyboard_jump", mRightKeyboard[IA_JUMP]);
+		mOptionConfig.setString("right_blobby_joystick_left", mRightJoystick[IA_LEFT]);
+		mOptionConfig.setString("right_blobby_joystick_right", mRightJoystick[IA_RIGHT]);
+		mOptionConfig.setString("right_blobby_joystick_jump", mRightJoystick[IA_JUMP]);
 
-	//left data:
-	mOptionConfig.setString("left_2_blobby_device", mLeft2Device);
-	mOptionConfig.setInteger("left_2_blobby_mouse_jumpbutton", mLeft2MouseJumpbutton);
-	mOptionConfig.setFloat("left_2_blobby_mouse_sensitivity", mLeft2MouseSensitivity);
-	mOptionConfig.setString("left_2_blobby_keyboard_left", mLeft2Keyboard[IA_LEFT]);
-	mOptionConfig.setString("left_2_blobby_keyboard_right", mLeft2Keyboard[IA_RIGHT]);
-	mOptionConfig.setString("left_2_blobby_keyboard_jump", mLeft2Keyboard[IA_JUMP]);
-	mOptionConfig.setString("left_2_blobby_joystick_left", mLeft2Joystick[IA_LEFT]);
-	mOptionConfig.setString("left_2_blobby_joystick_right", mLeft2Joystick[IA_RIGHT]);
-	mOptionConfig.setString("left_2_blobby_joystick_jump", mLeft2Joystick[IA_JUMP]);
-	//right data:
-	mOptionConfig.setString("right_2_blobby_device", mRight2Device);
-	mOptionConfig.setInteger("right_2_blobby_mouse_jumpbutton", mRight2MouseJumpbutton);
-	mOptionConfig.setFloat("right_2_blobby_mouse_sensitivity", mRight2MouseSensitivity);
-	mOptionConfig.setString("right_2_blobby_keyboard_left", mRight2Keyboard[IA_LEFT]);
-	mOptionConfig.setString("right_2_blobby_keyboard_right", mRight2Keyboard[IA_RIGHT]);
-	mOptionConfig.setString("right_2_blobby_keyboard_jump", mRight2Keyboard[IA_JUMP]);
-	mOptionConfig.setString("right_2_blobby_joystick_left", mRight2Joystick[IA_LEFT]);
-	mOptionConfig.setString("right_2_blobby_joystick_right", mRight2Joystick[IA_RIGHT]);
-	mOptionConfig.setString("right_2_blobby_joystick_jump", mRight2Joystick[IA_JUMP]);
-
-	//global data:
-	mOptionConfig.setInteger("blobby_touch_type", mBlobbyTouchType);
+		//global data:
+		mOptionConfig.setInteger("blobby_touch_type", mBlobbyTouchType);
+	}
+	else
+	{
+		//left data:
+		mOptionConfig.setString("left_2_blobby_device", mLeftDevice);
+		mOptionConfig.setInteger("left_2_blobby_mouse_jumpbutton", mLeftMouseJumpbutton);
+		mOptionConfig.setFloat("left_2_blobby_mouse_sensitivity", mLeftMouseSensitivity);
+		mOptionConfig.setString("left_2_blobby_keyboard_left", mLeftKeyboard[IA_LEFT]);
+		mOptionConfig.setString("left_2_blobby_keyboard_right", mLeftKeyboard[IA_RIGHT]);
+		mOptionConfig.setString("left_2_blobby_keyboard_jump", mLeftKeyboard[IA_JUMP]);
+		mOptionConfig.setString("left_2_blobby_joystick_left", mLeftJoystick[IA_LEFT]);
+		mOptionConfig.setString("left_2_blobby_joystick_right", mLeftJoystick[IA_RIGHT]);
+		mOptionConfig.setString("left_2_blobby_joystick_jump", mLeftJoystick[IA_JUMP]);
+		//right data:
+		mOptionConfig.setString("right_2_blobby_device", mRightDevice);
+		mOptionConfig.setInteger("right_2_blobby_mouse_jumpbutton", mRightMouseJumpbutton);
+		mOptionConfig.setFloat("right_2_blobby_mouse_sensitivity", mRightMouseSensitivity);
+		mOptionConfig.setString("right_2_blobby_keyboard_left", mRightKeyboard[IA_LEFT]);
+		mOptionConfig.setString("right_2_blobby_keyboard_right", mRightKeyboard[IA_RIGHT]);
+		mOptionConfig.setString("right_2_blobby_keyboard_jump", mRightKeyboard[IA_JUMP]);
+		mOptionConfig.setString("right_2_blobby_joystick_left", mRightJoystick[IA_LEFT]);
+		mOptionConfig.setString("right_2_blobby_joystick_right", mRightJoystick[IA_RIGHT]);
+		mOptionConfig.setString("right_2_blobby_joystick_jump", mRightJoystick[IA_JUMP]);
+	}	
 
 	mOptionConfig.saveFile("inputconfig.xml");
 }
@@ -508,24 +866,17 @@ void InputOptionsState::step_impl()
 	imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
 
 	std::string lastActionKey = InputManager::getSingleton()->getLastActionKey();
-
+	
 	// left player side:
-	handlePlayerInput(LEFT_PLAYER, lastActionKey, mLeftMouseJumpbutton, mLeftKeyboard, mLeftJoystick);
+	handlePlayerInput(mPrimary? LEFT_PLAYER : LEFT_PLAYER_2, lastActionKey, mLeftMouseJumpbutton, mLeftKeyboard, mLeftJoystick);
 
 	//right player side:
-	handlePlayerInput(RIGHT_PLAYER, lastActionKey, mRightMouseJumpbutton, mRightKeyboard, mRightJoystick);
-
-	// left player side:
-	handlePlayerInput(LEFT_PLAYER_2, lastActionKey, mLeft2MouseJumpbutton, mLeft2Keyboard, mLeft2Joystick);
-
-	//right player side:
-	handlePlayerInput(RIGHT_PLAYER_2, lastActionKey, mRight2MouseJumpbutton, mRight2Keyboard, mRight2Joystick);
+	handlePlayerInput(mPrimary? RIGHT_PLAYER : RIGHT_PLAYER_2, lastActionKey, mRightMouseJumpbutton, mRightKeyboard, mRightJoystick);
+	
 
 	//check if a capture window is open, to set all widgets inactive:
-	if (mLeftKeyboard[IA_LEFT] != "" && mLeftKeyboard[IA_RIGHT] != "" && mLeftKeyboard[IA_JUMP] != "" && mLeftJoystick[IA_LEFT] != "" &&
-		 mLeftJoystick[IA_RIGHT] != "" && mLeftJoystick[IA_JUMP] != "" && mLeftMouseJumpbutton != -1 && mRightKeyboard[IA_LEFT] != "" &&
-		 mRightKeyboard[IA_RIGHT] != "" && mRightKeyboard[IA_JUMP] != "" && mRightJoystick[IA_LEFT] != "" && mRightJoystick[IA_RIGHT] != "" &&
-		 mRightJoystick[IA_JUMP] != "" && mRightMouseJumpbutton != -1)
+	if (checkKeys(mLeftKeyboard) && checkKeys(mLeftJoystick) && mLeftMouseJumpbutton != -1 &&
+		checkKeys(mRightKeyboard) && checkKeys(mRightJoystick) && mRightMouseJumpbutton != -1)			
 	{
 		imgui.doCursor(true);
 		imgui.doInactiveMode(false);
@@ -556,7 +907,7 @@ void InputOptionsState::step_impl()
 	getJoystickInput(mRightJoystick[IA_LEFT], TextManager::OP_MOVING_LEFT);
 	getJoystickInput(mRightJoystick[IA_RIGHT], TextManager::OP_MOVING_RIGHT);
 	getJoystickInput(mRightJoystick[IA_JUMP], TextManager::OP_JUMPING);
-
+	   
 	if (imgui.doButton(GEN_ID, Vector2(224.0, 530.0), TextManager::LBL_OK))
 	{
 		save();
@@ -571,10 +922,31 @@ void InputOptionsState::step_impl()
 void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastActionKey, int& mouse, std::string keyboard[], std::string joystick[])
 {
 	IMGUI& imgui = IMGUI::getSingleton();
+		
+	std::string& device = (player % 2 == 0) ? mLeftDevice : mRightDevice;	
+	int base_x = (player % 2 == 0) ? 0 : 400;
 
-	TextManager::STRING p_str = (player == LEFT_PLAYER) ? TextManager::OP_LEFT_PLAYER : TextManager::OP_RIGHT_PLAYER;
-	std::string& device = (player == LEFT_PLAYER) ? mLeftDevice : mRightDevice;
-	int base_x = (player == LEFT_PLAYER) ? 0 : 400;
+	TextManager::STRING p_str;
+	
+	switch (player)
+	{
+	case LEFT_PLAYER:
+		p_str = TextManager::OP_LEFT_PLAYER;		
+		break;
+
+	case RIGHT_PLAYER:
+		p_str = TextManager::OP_RIGHT_PLAYER;		
+		break;
+
+	case LEFT_PLAYER_2:
+		p_str = TextManager::OP_LEFT_PLAYER_2;		
+		break;
+
+	case RIGHT_PLAYER_2:
+		p_str = TextManager::OP_RIGHT_PLAYER_2;		
+		break;
+	}
+		
 	imgui.doText(GEN_ID, Vector2(base_x + 34.0, 10.0), p_str);
 
 	if (imgui.doButton(GEN_ID, Vector2(base_x + 80.0, 60.0), getDeviceName(device)))
@@ -588,8 +960,9 @@ void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastAc
 			device = "joystick";
 		}
 		else if (device == "joystick")
-		{
-			if (mRightDevice != "mouse" && mLeftDevice != "mouse")
+		{			
+			if (mRightDevice != "mouse" && mLeftDevice != "mouse" &&
+				mRight2Device != "mouse" && mLeft2Device != "mouse")
 			{
 				device = "mouse";
 			}
@@ -602,7 +975,7 @@ void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastAc
 	//if mouse device is selected:
 	if (device == "mouse")
 	{
-		handleMouseInput(base_x, mouse, player == LEFT_PLAYER ? mLeftMouseSensitivity : mRightMouseSensitivity);
+		handleMouseInput(base_x, mouse, (player % 2 == 0) ? mLeftMouseSensitivity : mRightMouseSensitivity);
 	}
 	if ((mouse == -2) && (InputManager::getSingleton()->getLastMouseButton() == -1))
 		mouse = -1;
