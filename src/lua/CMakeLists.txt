@@ -21,7 +21,7 @@ set (lua_SRC
 	loadlib.c
 	lobject.c lobject.h
 	lopcodes.c lopcodes.h
-	loslib.c
+#	loslib.c
 	lparser.c lparser.h
 	lprefix.h
 	lstate.c lstate.h
@@ -30,8 +30,8 @@ set (lua_SRC
 	ltable.c ltable.h
 	ltablib.c
 	ltm.c ltm.h
-	lua.c lua.h lua.hpp
-	luac.c	
+#	lua.c lua.h lua.hpp
+#	luac.c
 	luaconf.h
 	lualib.h
 	lundump.c lundump.h
