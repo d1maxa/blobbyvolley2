@@ -44,7 +44,7 @@ class RenderManagerGP2X : public RenderManager
 
 		virtual void setBall(const Vector2& position, float rotation);
 		virtual void setBlob(int player, const Vector2& position,
-				float animationState);
+				float animationState, bool enabled);
 
 		virtual void setScore(int leftScore, int rightScore,
 				   bool leftWarning, bool rightWarning);
@@ -76,9 +76,7 @@ class RenderManagerGP2X : public RenderManager
 				
 		Vector2 mBlobPosition[MAX_PLAYERS];
 		float mBlobAnimationState[MAX_PLAYERS];
-		Vector2 mRightBlobPosition;
-		float mRightBlobAnimationState;
-
+		
 		int mLeftPlayerScore;
 		int mRightPlayerScore;
 		bool mLeftPlayerWarning;

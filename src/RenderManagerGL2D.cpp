@@ -240,8 +240,11 @@ void RenderManagerGL2D::init(int xResolution, int yResolution, bool fullscreen)
 	SDL_ShowCursor(0);
 	glDisable(GL_MULTISAMPLE);
 
-	mLeftBlobColor = Color(255, 0, 0);
-	mRightBlobColor = Color(0, 255, 0);
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		mBlobColor[i] = Color(255, 0, 0);
+	}
+	
 	glEnable(GL_TEXTURE_2D);
 
 	// Load background
@@ -376,15 +379,16 @@ void RenderManagerGL2D::draw()
 		// Blob shadows
 		Vector2 pos;
 
-		pos = blobShadowPosition(mLeftBlobPosition);
-		glColor4ub(mLeftBlobColor.r, mLeftBlobColor.g, mLeftBlobColor.b, 128);
-		glBindTexture(mBlobShadow[int(mLeftBlobAnimationState)  % 5]);
-		drawQuad(pos.x, pos.y, 128.0, 32.0);
-
-		pos = blobShadowPosition(mRightBlobPosition);
-		glColor4ub(mRightBlobColor.r, mRightBlobColor.g, mRightBlobColor.b, 128);
-		glBindTexture(mBlobShadow[int(mRightBlobAnimationState)  % 5]);
-		drawQuad(pos.x, pos.y, 128.0, 32.0);
+		for (int i = 0; i < MAX_PLAYERS; ++i)
+		{
+			if(mPlayersEnabled[i])
+			{
+				pos = blobShadowPosition(mBlobPosition[i]);
+				glColor4ub(mBlobColor[i].r, mBlobColor[i].g, mBlobColor[i].b, 128);
+				glBindTexture(mBlobShadow[int(mBlobAnimationState[i]) % 5]);
+				drawQuad(pos.x, pos.y, 128.0, 32.0);
+			}
+		}		
 
 		// Ball shadow
 		pos = ballShadowPosition(mBallPosition);
@@ -426,27 +430,30 @@ void RenderManagerGL2D::draw()
 */
 
 	// blob normal
-	// left blob
-	glBindTexture(mBlob[int(mLeftBlobAnimationState)  % 5]);
-	glColor3ubv(mLeftBlobColor.val);
-	drawQuad(mLeftBlobPosition.x, mLeftBlobPosition.y, 128.0, 128.0);
 
-	// right blob
-	glBindTexture(mBlob[int(mRightBlobAnimationState)  % 5]);
-	glColor3ubv(mRightBlobColor.val);
-	drawQuad(mRightBlobPosition.x, mRightBlobPosition.y, 128.0, 128.0);
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if (mPlayersEnabled[i])
+		{
+			glBindTexture(mBlob[int(mBlobAnimationState[i]) % 5]);
+			glColor3ubv(mBlobColor[i].val);
+			drawQuad(mBlobPosition[i].x, mBlobPosition[i].y, 128.0, 128.0);
+		}
+	}	
 
 	// blob specular
 	glEnable(GL_BLEND);
 	glColor4f(1.0, 1.0, 1.0, 1.0);
-	// left blob
-	glBindTexture(mBlobSpecular[int(mLeftBlobAnimationState)  % 5]);
-	drawQuad(mLeftBlobPosition.x, mLeftBlobPosition.y, 128.0, 128.0);
 
-	// right blob
-	glBindTexture(mBlobSpecular[int(mRightBlobAnimationState)  % 5]);
-	drawQuad(mRightBlobPosition.x, mRightBlobPosition.y, 128.0, 128.0);
-
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if(mPlayersEnabled[i])
+		{
+			glBindTexture(mBlobSpecular[int(mBlobAnimationState[i]) % 5]);
+			drawQuad(mBlobPosition[i].x, mBlobPosition[i].y, 128.0, 128.0);
+		}
+	}
+	
 	glDisable(GL_BLEND);
 
 
@@ -489,11 +496,7 @@ bool RenderManagerGL2D::setBackground(const std::string& filename)
 
 void RenderManagerGL2D::setBlobColor(int player, Color color)
 {
-	if (player == LEFT_PLAYER)
-		mLeftBlobColor = color;
-
-	if (player == RIGHT_PLAYER)
-		mRightBlobColor = color;
+	mBlobColor[player] = color;	
 }
 
 void RenderManagerGL2D::showShadow(bool shadow)
@@ -515,19 +518,11 @@ void RenderManagerGL2D::setBall(const Vector2& position, float rotation)
 	}
 }
 
-void RenderManagerGL2D::setBlob(int player, const Vector2& position, float animationState)
+void RenderManagerGL2D::setBlob(int player, const Vector2& position, float animationState, bool enabled)
 {
-	if (player == LEFT_PLAYER)
-	{
-		mLeftBlobPosition = position;
-		mLeftBlobAnimationState = animationState;
-	}
-
-	if (player == RIGHT_PLAYER)
-	{
-		mRightBlobPosition = position;
-		mRightBlobAnimationState = animationState;
-	}
+	mPlayersEnabled[player] = enabled;
+	mBlobPosition[player] = position;
+	mBlobAnimationState[player] = animationState;	
 }
 
 void RenderManagerGL2D::drawText(const std::string& text, Vector2 position, unsigned int flags)
@@ -662,13 +657,13 @@ void RenderManagerGL2D::drawParticle(const Vector2& pos, int player)
 {
 	//glLoadIdentity();
 	//glTranslatef(pos.x, pos.y, 0.6);
+	
+	glColor3ubv(mBlobColor[player].val);
 
-	if (player == LEFT_PLAYER)
-		glColor3ubv(mLeftBlobColor.val);
-	if (player == RIGHT_PLAYER)
-		glColor3ubv(mRightBlobColor.val);
+	/*
 	if (player > 1)
 		glColor3ubv(Color(255, 0, 0).val);
+	*/
 
 	float w = 16.0;
 	float h = 16.0;

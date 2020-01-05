@@ -70,7 +70,7 @@ class UserConfig: public IUserConfigReader, public ObjectCounter<UserConfig>
 			std::string prefix = (side % 2) ? "right" : "left";
 			if (side > RIGHT_PLAYER)
 			{
-				prefix += "_" + std::to_string(side);				
+				prefix += "_" + std::to_string(side / 2 + 1);				
 			}
 			return prefix;
 		}

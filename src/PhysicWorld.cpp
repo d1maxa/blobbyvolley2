@@ -70,9 +70,9 @@ PhysicWorld::PhysicWorld(bool playersEnabled[4]) : PhysicWorld()
 			mBlobState[i] = 0.0;
 
 			if (i % 2)
-				mBlobPosition[i] = Vector2(600 + 25 * i, GROUND_PLANE_HEIGHT);
+				mBlobPosition[i] = Vector2(600 + 40 * (i / 2), GROUND_PLANE_HEIGHT);
 			else
-				mBlobPosition[i] = Vector2(200 + 25 * i, GROUND_PLANE_HEIGHT);
+				mBlobPosition[i] = Vector2(200 + 40 * (i / 2), GROUND_PLANE_HEIGHT);
 		}
 	}
 }

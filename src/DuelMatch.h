@@ -119,6 +119,9 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 		/// gets the current state
 		DuelMatchState getState() const;
 
+		// gets player enabled state
+		bool getPlayerEnabled(PlayerSide player) const;
+
 		//Input stuff for recording and playing replays
 		std::shared_ptr<InputSource> getInputSource(PlayerSide player) const;
 

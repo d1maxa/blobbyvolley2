@@ -59,7 +59,7 @@ class RenderManagerGL2D : public RenderManager
 
 		virtual void setBall(const Vector2& position, float rotation);
 		virtual void setBlob(int player, const Vector2& position,
-				float animationState);
+				float animationState, bool enabled);
 
 		virtual void drawText(const std::string& text, Vector2 position, unsigned int flags = TF_NORMAL);
 		virtual void drawImage(const std::string& filename, Vector2 position, Vector2 size);
@@ -97,15 +97,13 @@ class RenderManagerGL2D : public RenderManager
 
 		Vector2 mBallPosition;
 		float mBallRotation;
-		Vector2 mLeftBlobPosition;
-		float mLeftBlobAnimationState;
-		Vector2 mRightBlobPosition;
-		float mRightBlobAnimationState;
+
+		Vector2 mBlobPosition[MAX_PLAYERS];
+		float mBlobAnimationState[MAX_PLAYERS];		
 
 		bool mShowShadow;
 
-		Color mLeftBlobColor;
-		Color mRightBlobColor;
+		Color mBlobColor[MAX_PLAYERS];		
 
 		void drawQuad(float x, float y, float width, float height);
 		void drawQuad(float x, float y, const Texture& tex);

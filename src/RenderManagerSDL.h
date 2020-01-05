@@ -46,7 +46,7 @@ class RenderManagerSDL : public RenderManager
 
 		virtual void setBall(const Vector2& position, float rotation);
 		virtual void setBlob(int player, const Vector2& position,
-				float animationState);
+				float animationState, bool enabled);
 
 		virtual void setMouseMarker(float position);
 
@@ -79,14 +79,11 @@ class RenderManagerSDL : public RenderManager
 		std::vector<SDL_Surface*> mStandardBlob;
 		std::vector<SDL_Surface*> mStandardBlobShadow;
 		SDL_Surface* mStandardBlobBlood;
-		std::vector<DynamicColoredTexture> mLeftBlob;
-		std::vector<DynamicColoredTexture> mLeftBlobShadow;
-		DynamicColoredTexture mLeftBlobBlood;
 
-		std::vector<DynamicColoredTexture> mRightBlob;
-		std::vector<DynamicColoredTexture> mRightBlobShadow;
-		DynamicColoredTexture mRightBlobBlood;
-
+		std::vector<DynamicColoredTexture> mBlob[MAX_PLAYERS];
+		std::vector<DynamicColoredTexture> mBlobShadow[MAX_PLAYERS];
+		DynamicColoredTexture mBlobBlood[MAX_PLAYERS];
+		
 		std::vector<SDL_Texture*> mFont;
 		std::vector<SDL_Texture*> mHighlightFont;
 
@@ -96,11 +93,10 @@ class RenderManagerSDL : public RenderManager
 
 		Vector2 mBallPosition;
 		float mBallRotation;
-		Vector2 mLeftBlobPosition;
-		float mLeftBlobAnimationState;
-		Vector2 mRightBlobPosition;
-		float mRightBlobAnimationState;
 
+		Vector2 mBlobPosition[MAX_PLAYERS];
+		float mBlobAnimationState[MAX_PLAYERS];
+		
 		bool mShowShadow;
 
 		// Store color for caching

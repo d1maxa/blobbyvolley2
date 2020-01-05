@@ -145,7 +145,7 @@ class RenderManager : public ObjectCounter<RenderManager>
 		// Takes the new position and the animation state as a float,
 		// because some renderers may interpolate the animation
 		virtual void setBlob(int player, const Vector2& position,
-				float animationState) {};
+				float animationState, bool enabled) {};
 
 		virtual void setMouseMarker(float position);
 
@@ -209,6 +209,8 @@ class RenderManager : public ObjectCounter<RenderManager>
 
 		float mMouseMarkerPosition;
 		bool mNeedRedraw;
+
+		bool mPlayersEnabled[MAX_PLAYERS];
 
 	private:
 		static RenderManager *mSingleton;

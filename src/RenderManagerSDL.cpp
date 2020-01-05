@@ -81,8 +81,10 @@ RenderManagerSDL::RenderManagerSDL()
 	: RenderManager()
 {
 	mBallRotation = 0.0;
-	mLeftBlobAnimationState = 0.0;
-	mRightBlobAnimationState = 0.0;
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		mBlobAnimationState[i] = 0.0;
+	}	
 }
 
 RenderManager* RenderManager::createRenderManagerSDL()
@@ -224,50 +226,35 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 		}
 
 		mStandardBlobShadow.push_back(formatedBlobShadowImage);
+		
+		for (int j = 0; j < MAX_PLAYERS; ++j)
+		{
+			if (mPlayersEnabled[j])
+			{
+				// Prepare blobby textures
+				SDL_Texture* blobTex = SDL_CreateTexture(mRenderer,
+					SDL_PIXELFORMAT_ABGR8888,
+					SDL_TEXTUREACCESS_STREAMING,
+					formatedBlobImage->w, formatedBlobImage->h);
+				SDL_SetTextureBlendMode(blobTex, SDL_BLENDMODE_BLEND);
+				SDL_UpdateTexture(blobTex, NULL, formatedBlobImage->pixels, formatedBlobImage->pitch);
 
-		// Prepare blobby textures
-		SDL_Texture* leftBlobTex = SDL_CreateTexture(mRenderer,
-				SDL_PIXELFORMAT_ABGR8888,
-				SDL_TEXTUREACCESS_STREAMING,
-				formatedBlobImage->w, formatedBlobImage->h);
-		SDL_SetTextureBlendMode(leftBlobTex, SDL_BLENDMODE_BLEND);
-		SDL_UpdateTexture(leftBlobTex, NULL, formatedBlobImage->pixels, formatedBlobImage->pitch);
+				mBlob[j].push_back(DynamicColoredTexture(
+					blobTex,
+					Color(255, 255, 255)));
 
-		mLeftBlob.push_back(DynamicColoredTexture(
-				leftBlobTex,
-				Color(255, 255, 255)));
-
-		SDL_Texture* rightBlobTex = SDL_CreateTexture(mRenderer,
-				SDL_PIXELFORMAT_ABGR8888,
-				SDL_TEXTUREACCESS_STREAMING,
-				formatedBlobImage->w, formatedBlobImage->h);
-		SDL_SetTextureBlendMode(rightBlobTex, SDL_BLENDMODE_BLEND);
-		SDL_UpdateTexture(rightBlobTex, NULL, formatedBlobImage->pixels, formatedBlobImage->pitch);
-
-		mRightBlob.push_back(DynamicColoredTexture(
-				rightBlobTex,
-				Color(255, 255, 255)));
-
-		// Prepare blobby shadow textures
-		SDL_Texture* leftBlobShadowTex = SDL_CreateTexture(mRenderer,
-				SDL_PIXELFORMAT_ABGR8888,
-				SDL_TEXTUREACCESS_STREAMING,
-				formatedBlobShadowImage->w, formatedBlobShadowImage->h);
-		SDL_SetTextureBlendMode(leftBlobShadowTex, SDL_BLENDMODE_BLEND);
-		mLeftBlobShadow.push_back(DynamicColoredTexture(
-				leftBlobShadowTex,
-				Color(255, 255, 255)));
-		SDL_UpdateTexture(leftBlobShadowTex, NULL, formatedBlobShadowImage->pixels, formatedBlobShadowImage->pitch);
-
-		SDL_Texture* rightBlobShadowTex = SDL_CreateTexture(mRenderer,
-				SDL_PIXELFORMAT_ABGR8888,
-				SDL_TEXTUREACCESS_STREAMING,
-				formatedBlobShadowImage->w, formatedBlobShadowImage->h);
-		SDL_SetTextureBlendMode(rightBlobShadowTex, SDL_BLENDMODE_BLEND);
-		mRightBlobShadow.push_back(DynamicColoredTexture(
-				rightBlobShadowTex,
-				Color(255, 255, 255)));
-		SDL_UpdateTexture(rightBlobShadowTex, NULL, formatedBlobShadowImage->pixels, formatedBlobShadowImage->pitch);
+				// Prepare blobby shadow textures
+				SDL_Texture* blobShadowTex = SDL_CreateTexture(mRenderer,
+					SDL_PIXELFORMAT_ABGR8888,
+					SDL_TEXTUREACCESS_STREAMING,
+					formatedBlobShadowImage->w, formatedBlobShadowImage->h);
+				SDL_SetTextureBlendMode(blobShadowTex, SDL_BLENDMODE_BLEND);
+				mBlobShadow[j].push_back(DynamicColoredTexture(
+					blobShadowTex,
+					Color(255, 255, 255)));
+				SDL_UpdateTexture(blobShadowTex, NULL, formatedBlobShadowImage->pixels, formatedBlobShadowImage->pitch);
+			}
+		}					
 
 		// Load specific icon to cancel a game
 #if !__FEATURE_HAS_BACKBUTTON__
@@ -312,28 +299,24 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 
 	mStandardBlobBlood = formatedBlobStandardBlood;
 
-	// Create streamed textures for blood
-	SDL_Texture* leftBlobBlood = SDL_CreateTexture(mRenderer,
-			SDL_PIXELFORMAT_ABGR8888,
-			SDL_TEXTUREACCESS_STREAMING,
-			formatedBlobStandardBlood->w, formatedBlobStandardBlood->h);
-	SDL_SetTextureBlendMode(leftBlobBlood, SDL_BLENDMODE_BLEND);
-	mLeftBlobBlood = DynamicColoredTexture(
-			leftBlobBlood,
-			Color(255, 0, 0));
-	SDL_UpdateTexture(leftBlobBlood, NULL, formatedBlobStandardBlood->pixels, formatedBlobStandardBlood->pitch);
-
-	SDL_Texture* rightBlobBlood = SDL_CreateTexture(mRenderer,
-			SDL_PIXELFORMAT_ABGR8888,
-			SDL_TEXTUREACCESS_STREAMING,
-			formatedBlobStandardBlood->w, formatedBlobStandardBlood->h);
-	SDL_SetTextureBlendMode(rightBlobBlood, SDL_BLENDMODE_BLEND);
-	mRightBlobBlood = DynamicColoredTexture(
-			rightBlobBlood,
-			Color(255, 0, 0));
-	SDL_UpdateTexture(rightBlobBlood, NULL, formatedBlobStandardBlood->pixels, formatedBlobStandardBlood->pitch);
-
-SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if(mPlayersEnabled[i])
+		{
+			// Create streamed textures for blood
+			SDL_Texture* blobBlood = SDL_CreateTexture(mRenderer,
+				SDL_PIXELFORMAT_ABGR8888,
+				SDL_TEXTUREACCESS_STREAMING,
+				formatedBlobStandardBlood->w, formatedBlobStandardBlood->h);
+			SDL_SetTextureBlendMode(blobBlood, SDL_BLENDMODE_BLEND);
+			mBlobBlood[i] = DynamicColoredTexture(
+				blobBlood,
+				Color(255, 0, 0));
+			SDL_UpdateTexture(blobBlood, NULL, formatedBlobStandardBlood->pixels, formatedBlobStandardBlood->pitch);
+		}
+	}	
+	
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 }
 
 void RenderManagerSDL::deinit()
@@ -355,15 +338,26 @@ void RenderManagerSDL::deinit()
 	{
 		SDL_FreeSurface(mStandardBlob[i]);
 		SDL_FreeSurface(mStandardBlobShadow[i]);
-		SDL_DestroyTexture(mLeftBlob[i].mSDLsf);
-		SDL_DestroyTexture(mLeftBlobShadow[i].mSDLsf);
-		SDL_DestroyTexture(mRightBlob[i].mSDLsf);
-		SDL_DestroyTexture(mRightBlobShadow[i].mSDLsf);
+
+		for (int j = 0; j < MAX_PLAYERS; ++j)
+		{
+			if(mPlayersEnabled[j])
+			{
+				SDL_DestroyTexture(mBlob[j][i].mSDLsf);
+				SDL_DestroyTexture(mBlobShadow[j][i].mSDLsf);
+			}
+		}		
 	}
 
 	SDL_FreeSurface(mStandardBlobBlood);
-	SDL_DestroyTexture(mLeftBlobBlood.mSDLsf);
-	SDL_DestroyTexture(mRightBlobBlood.mSDLsf);
+
+	for (int j = 0; j < MAX_PLAYERS; ++j)
+	{
+		if (mPlayersEnabled[j])
+		{
+			SDL_DestroyTexture(mBlobBlood[j].mSDLsf);			
+		}
+	}	
 
 	for (unsigned int i = 0; i < mFont.size(); ++i)
 	{
@@ -412,15 +406,16 @@ void RenderManagerSDL::draw()
 		position = ballShadowRect(ballShadowPosition(mBallPosition));
 		SDL_RenderCopy(mRenderer, mBallShadow, 0, &position);
 
-		// Left blob shadow
-		position = blobShadowRect(blobShadowPosition(mLeftBlobPosition));
-		animationState = int(mLeftBlobAnimationState) % 5;
-		SDL_RenderCopy(mRenderer, mLeftBlobShadow[animationState].mSDLsf, 0, &position);
-
-		// Right blob shadow
-		position = blobShadowRect(blobShadowPosition(mRightBlobPosition));
-		animationState = int(mRightBlobAnimationState) % 5;
-		SDL_RenderCopy(mRenderer, mRightBlobShadow[animationState].mSDLsf, 0, &position);
+		// Blobs shadows
+		for (int i = 0; i < MAX_PLAYERS; ++i)
+		{
+			if (mPlayersEnabled[i])
+			{
+				position = blobShadowRect(blobShadowPosition(mBlobPosition[i]));
+				animationState = int(mBlobAnimationState[i]) % 5;
+				SDL_RenderCopy(mRenderer, mBlobShadow[i][animationState].mSDLsf, 0, &position);
+			}
+		}		
 	}
 
 	// Restore the rod
@@ -445,20 +440,20 @@ void RenderManagerSDL::draw()
 	position = ballRect(mBallPosition);
 	animationState = int(mBallRotation / M_PI / 2 * 16) % 16;
 	SDL_RenderCopy(mRenderer, mBall[animationState], 0, &position);
+	
+	// Drawing blobs
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if(mPlayersEnabled[i])
+		{
+			// update blob colors
+			colorizeBlobs(i);
 
-	// update blob colors
-	colorizeBlobs(LEFT_PLAYER);
-	colorizeBlobs(RIGHT_PLAYER);
-
-	// Drawing left blob
-	position = blobRect(mLeftBlobPosition);
-	animationState = int(mLeftBlobAnimationState) % 5;
-	SDL_RenderCopy(mRenderer, mLeftBlob[animationState].mSDLsf, 0, &position);
-
-	// Drawing right blob
-	position = blobRect(mRightBlobPosition);
-	animationState = int(mRightBlobAnimationState) % 5;
-	SDL_RenderCopy(mRenderer, mRightBlob[animationState].mSDLsf, 0, &position);
+			position = blobRect(mBlobPosition[i]);
+			animationState = int(mBlobAnimationState[i]) % 5;
+			SDL_RenderCopy(mRenderer, mBlob[i][animationState].mSDLsf, 0, &position);
+		}
+	}	
 }
 
 bool RenderManagerSDL::setBackground(const std::string& filename)
@@ -494,17 +489,8 @@ void RenderManagerSDL::setBlobColor(int player, Color color)
 		return;
 	}
 
-	DynamicColoredTexture* handledBlobBlood;
-
-	if (player == LEFT_PLAYER)
-	{
-		handledBlobBlood = &mLeftBlobBlood;
-	}
-	if (player == RIGHT_PLAYER)
-	{
-		handledBlobBlood = &mRightBlobBlood;
-	}
-
+	DynamicColoredTexture* handledBlobBlood = &mBlobBlood[player];
+	
 	SDL_Surface* tempSurface = colorSurface(mStandardBlobBlood, mBlobColor[player]);
 	SDL_UpdateTexture(handledBlobBlood->mSDLsf, NULL, tempSurface->pixels, tempSurface->pitch);
 	SDL_FreeSurface(tempSurface);
@@ -513,23 +499,10 @@ void RenderManagerSDL::setBlobColor(int player, Color color)
 
 void RenderManagerSDL::colorizeBlobs(int player)
 {
-	std::vector<DynamicColoredTexture> *handledBlob = 0;
-	std::vector<DynamicColoredTexture> *handledBlobShadow = 0;
-	int frame;
-
-	if (player == LEFT_PLAYER)
-	{
-		handledBlob = &mLeftBlob;
-		handledBlobShadow = &mLeftBlobShadow;
-		frame = mLeftBlobAnimationState;
-	}
-	if (player == RIGHT_PLAYER)
-	{
-		handledBlob = &mRightBlob;
-		handledBlobShadow = &mRightBlobShadow;
-		frame = mRightBlobAnimationState;
-	}
-
+	std::vector<DynamicColoredTexture>* handledBlob = &mBlob[player];
+	std::vector<DynamicColoredTexture>* handledBlobShadow = &mBlobShadow[player];
+	const int frame = mBlobAnimationState[player];
+	
 	if( (*handledBlob)[frame].mColor != mBlobColor[player])
 	{
 		SDL_Surface* tempSurface = colorSurface(mStandardBlob[frame], mBlobColor[player]);
@@ -562,19 +535,11 @@ void RenderManagerSDL::setMouseMarker(float position)
 }
 
 void RenderManagerSDL::setBlob(int player,
-		const Vector2& position, float animationState)
+		const Vector2& position, float animationState, bool enabled)
 {
-	if (player == LEFT_PLAYER)
-	{
-		mLeftBlobPosition = position;
-		mLeftBlobAnimationState = animationState;
-	}
-
-	if (player == RIGHT_PLAYER)
-	{
-		mRightBlobPosition = position;
-		mRightBlobAnimationState = animationState;
-	}
+	mPlayersEnabled[player] = enabled;
+	mBlobPosition[player] = position;
+	mBlobAnimationState[player] = animationState;	
 }
 
 void RenderManagerSDL::drawText(const std::string& text, Vector2 position, unsigned int flags)
@@ -686,14 +651,17 @@ void RenderManagerSDL::drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Co
 
 void RenderManagerSDL::drawBlob(const Vector2& pos, const Color& col)
 {
+	// Draw blobs in Graphic options menu
 	SDL_Rect position;
 	position.x = (int)lround(pos.x);
 	position.y = (int)lround(pos.y);
 
 	static int toDraw = 0;
 
-	mLeftBlobAnimationState = 0;
-	mRightBlobAnimationState = 0;
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		mBlobAnimationState[i] = 0;
+	}	
 
 	setBlobColor(toDraw, col);
 	/// \todo this recolores the current frame (0)
@@ -707,14 +675,14 @@ void RenderManagerSDL::drawBlob(const Vector2& pos, const Color& col)
 
 	if(toDraw == 1)
 	{
-		SDL_QueryTexture(mRightBlob[mRightBlobAnimationState].mSDLsf, NULL, NULL, &position.w, &position.h);
-		SDL_RenderCopy(mRenderer, mRightBlob[mRightBlobAnimationState].mSDLsf, 0, &position);
+		SDL_QueryTexture(mBlob[toDraw][mBlobAnimationState[toDraw]].mSDLsf, NULL, NULL, &position.w, &position.h);
+		SDL_RenderCopy(mRenderer, mBlob[toDraw][mBlobAnimationState[toDraw]].mSDLsf, 0, &position);
 		toDraw = 0;
 	}
 	else
 	{
-		SDL_QueryTexture(mLeftBlob[mRightBlobAnimationState].mSDLsf, NULL, NULL, &position.w, &position.h);
-		SDL_RenderCopy(mRenderer, mLeftBlob[mRightBlobAnimationState].mSDLsf, 0, &position);
+		SDL_QueryTexture(mBlob[toDraw][mBlobAnimationState[toDraw]].mSDLsf, NULL, NULL, &position.w, &position.h);
+		SDL_RenderCopy(mRenderer, mBlob[toDraw][mBlobAnimationState[toDraw]].mSDLsf, 0, &position);
 		toDraw = 1;
 	}
 }
@@ -729,10 +697,8 @@ void RenderManagerSDL::drawParticle(const Vector2& pos, int player)
 		(short)9,
 		(short)9,
 	};
-
-	DynamicColoredTexture blood = player == LEFT_PLAYER ? mLeftBlobBlood : mRightBlobBlood;
-
-	SDL_RenderCopy(mRenderer, blood.mSDLsf, 0, &blitRect);
+	
+	SDL_RenderCopy(mRenderer, mBlobBlood[player].mSDLsf, 0, &blitRect);
 }
 
 void RenderManagerSDL::refresh()

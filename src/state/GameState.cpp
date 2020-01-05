@@ -53,27 +53,24 @@ void GameState::presentGame()
 	RenderManager& rmanager = RenderManager::getSingleton();
 	SoundManager& smanager = SoundManager::getSingleton();
 
-	rmanager.setBlob(LEFT_PLAYER, mMatch->getBlobPosition(LEFT_PLAYER), mMatch->getWorld().getBlobState(LEFT_PLAYER));
-	rmanager.setBlob(RIGHT_PLAYER, mMatch->getBlobPosition(RIGHT_PLAYER),	mMatch->getWorld().getBlobState(RIGHT_PLAYER));
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		const auto player = PlayerSide(i);
+		rmanager.setBlob(i, 
+			mMatch->getBlobPosition(player),
+			mMatch->getWorld().getBlobState(player),
+			mMatch->getPlayerEnabled(player));
 
-	if(mMatch->getPlayer(LEFT_PLAYER).getOscillating())
-	{
-		rmanager.setBlobColor(LEFT_PLAYER, rmanager.getOscillationColor());
+		if (mMatch->getPlayer(player).getOscillating())
+		{
+			rmanager.setBlobColor(i, rmanager.getOscillationColor());
+		}
+		else
+		{
+			rmanager.setBlobColor(i, mMatch->getPlayer(player).getStaticColor());
+		}
 	}
-	 else
-	{
-		rmanager.setBlobColor(LEFT_PLAYER, mMatch->getPlayer(LEFT_PLAYER).getStaticColor());
-	}
-
-	if(mMatch->getPlayer(RIGHT_PLAYER).getOscillating())
-	{
-		rmanager.setBlobColor(RIGHT_PLAYER, rmanager.getOscillationColor());
-	}
-	 else
-	{
-		rmanager.setBlobColor(RIGHT_PLAYER, mMatch->getPlayer(RIGHT_PLAYER).getStaticColor());
-	}
-
+	
 	rmanager.setBall(mMatch->getBallPosition(), mMatch->getWorld().getBallRotation());
 
 	auto events = mMatch->getEvents( );

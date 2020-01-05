@@ -111,23 +111,22 @@ void RenderManagerGP2X::init(int xResolution, int yResolution, bool fullscreen)
 		sprintf(filename, "gf2x/blobbym%d.bmp", i);
 		SDL_Surface* blobImage = loadSurface(filename);
 		mStandardBlob.push_back(blobImage);
-
-		for (int j = 0; j < MAX_PLAYERS; ++j)
-		{
-			mBlob[j].push_back(colorSurface(blobImage, Color(255, 0, 0)));
-		}		
-		
+				
 		sprintf(filename, "gf2x/sch1%d.bmp", i);
 		SDL_Surface* blobShadow = loadSurface(filename);
 		SDL_SetColorKey(blobShadow, SDL_SRCCOLORKEY,
 			SDL_MapRGB(blobShadow->format, 0, 0, 0));
 		SDL_SetAlpha(blobShadow, SDL_SRCALPHA, 127);
-		mStandardBlobShadow.push_back(blobShadow);
-		mLeftBlobShadow.push_back(
-			colorSurface(blobShadow, Color(255, 0, 0)));
-		mRightBlobShadow.push_back(
-			colorSurface(blobShadow, Color(0, 255, 0)));
+		mStandardBlobShadow.push_back(blobShadow);		
 
+		for (int j = 0; j < MAX_PLAYERS; ++j)
+		{
+			if (mPlayersEnabled[j])
+			{
+				mBlob[j].push_back(colorSurface(blobImage, Color(255, 0, 0)));
+				mBlobShadow[j].push_back(colorSurface(blobShadow, Color(255, 0, 0)));
+			}
+		}
 	}
 
 	for (int i = 0; i <= 54; ++i)
@@ -165,8 +164,11 @@ void RenderManagerGP2X::deinit()
 		
 		for (int j = 0; j < MAX_PLAYERS; ++j)
 		{
-			SDL_FreeSurface(mBlob[j][i]);
-			SDL_FreeSurface(mBlobShadow[j][i]);			
+			if (mPlayersEnabled[j])
+			{
+				SDL_FreeSurface(mBlob[j][i]);
+				SDL_FreeSurface(mBlobShadow[j][i]);
+			}
 		}
 	}
 
@@ -203,21 +205,18 @@ void RenderManagerGP2X::draw()
 	position.y = 200 - (200 - lround(mBallPosition.y)) / 16 - 5;
 	SDL_BlitSurface(mBallShadow, 0, mScreen, &position);
 
-	// Left blob shadow
-	position.x = lround(mLeftBlobPosition.x) +
-		(200 - lround(mLeftBlobPosition.y)) / 4 - 19;
-	position.y = 200 - (200 - lround(mLeftBlobPosition.y)) / 16 - 10;
-	animationState = int(mLeftBlobAnimationState)  % 5;
-	SDL_BlitSurface(mLeftBlobShadow[animationState], 0, mScreen, &position);
-
-	// Right blob shadow
-	position.x = lround(mRightBlobPosition.x) +
-		(200 - lround(mRightBlobPosition.y)) / 4 - 19;
-	position.y = 200 - (200 - lround(mRightBlobPosition.y)) / 16 - 10;
-	animationState = int(mRightBlobAnimationState)  % 5;
-	SDL_BlitSurface(mRightBlobShadow[animationState], 0,
-			mScreen, &position);
-
+	// Blobs shadows
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if (mPlayersEnabled[i])
+		{
+			position.x = lround(mBlobPosition[i].x) + (200 - lround(mBlobPosition[i].y)) / 4 - 19;
+			position.y = 200 - (200 - lround(mBlobPosition[i].y)) / 16 - 10;
+			animationState = int(mBlobAnimationState[i]) % 5;
+			SDL_BlitSurface(mBlobShadow[i][animationState], 0, mScreen, &position);
+		}
+	}
+	
 	// Restore the rod
 	position.x = 160 - 3;
 	position.y = 120;
@@ -234,26 +233,18 @@ void RenderManagerGP2X::draw()
 	animationState = int(mBallRotation / M_PI / 2 * 16) % 16;
 	SDL_BlitSurface(mBall[animationState], 0, mScreen, &position);
 
-	//Drawing blobs
+	// Drawing blobs
 
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		
-	}
-
-	// Drawing left blob
-
-	position.x = lround(mLeftBlobPosition.x) - 15;
-	position.y = lround(mLeftBlobPosition.y) - 18;
-	animationState = int(mLeftBlobAnimationState)  % 5;
-	SDL_BlitSurface(mLeftBlob[animationState], 0, mScreen, &position);
-
-	// Drawing right blob
-
-	position.x = lround(mRightBlobPosition.x) - 15;
-	position.y = lround(mRightBlobPosition.y) - 18;
-	animationState = int(mRightBlobAnimationState)  % 5;
-	SDL_BlitSurface(mRightBlob[animationState], 0, mScreen, &position);
+		if (mPlayersEnabled[i])
+		{
+			position.x = lround(mBlobPosition[i].x) - 15;
+			position.y = lround(mBlobPosition[i].y) - 18;
+			animationState = int(mBlobAnimationState[i]) % 5;
+			SDL_BlitSurface(mBlob[i][animationState], 0, mScreen, &position);
+		}
+	}	
 
 	// Drawing the score
 	char textBuffer[8];
@@ -293,17 +284,9 @@ void RenderManagerGP2X::setBlobColor(int player, Color color)
 	std::vector<SDL_Surface*> *handledBlob = 0;
 	std::vector<SDL_Surface*> *handledBlobShadow = 0;
 
-	if (player == LEFT_PLAYER)
-	{
-		handledBlob = &mLeftBlob;
-		handledBlobShadow = &mLeftBlobShadow;
-	}
-	if (player == RIGHT_PLAYER)
-	{
-		handledBlob = &mRightBlob;
-		handledBlobShadow = &mRightBlobShadow;
-	}
-
+	handledBlob = &mBlob[player];
+	handledBlobShadow = &mBlobShadow[player];
+	
 	for (int i = 0; i < 5; ++i)
 	{
 		SDL_FreeSurface((*handledBlob)[i]);
@@ -335,9 +318,10 @@ void RenderManagerGP2X::setBall(const Vector2& position, float rotation)
 	mBallRotation = rotation;
 }
 
-void RenderManagerGP2X::setBlob(int player,
-		const Vector2& position, float animationState)
+void RenderManagerGP2X::setBlob(int player, const Vector2& position, 
+	float animationState, bool enabled)
 {
+	mPlayersEnabled[player] = enabled;
 	mBlobPosition[player] = position * 0.4;
 	mBlobAnimationState[player] = animationState;	
 }

@@ -324,6 +324,11 @@ DuelMatchState DuelMatch::getState() const
 	return state;
 }
 
+bool DuelMatch::getPlayerEnabled(PlayerSide player) const
+{
+	return mPlayersEnabled[player];
+}
+
 void DuelMatch::setServingPlayer(PlayerSide side)
 {
 	mLogic->setServingPlayer( side );
