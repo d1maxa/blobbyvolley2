@@ -60,11 +60,10 @@ class RenderManagerGP2X : public RenderManager
 		std::vector<SDL_Surface*> mBall;
 		std::vector<SDL_Surface*> mStandardBlob;
 		std::vector<SDL_Surface*> mStandardBlobShadow;
-		std::vector<SDL_Surface*> mLeftBlob;
-		std::vector<SDL_Surface*> mLeftBlobShadow;
-		std::vector<SDL_Surface*> mRightBlob;
-		std::vector<SDL_Surface*> mRightBlobShadow;
 
+		std::vector<SDL_Surface*> mBlob[MAX_PLAYERS];
+		std::vector<SDL_Surface*> mBlobShadow[MAX_PLAYERS];
+		
 		std::vector<SDL_Surface*> mFont;
 		std::vector<SDL_Surface*> mHighlightFont;
 		std::vector<SDL_Surface*> mSmallFont;
@@ -74,8 +73,9 @@ class RenderManagerGP2X : public RenderManager
 
 		Vector2 mBallPosition;
 		float mBallRotation;
-		Vector2 mLeftBlobPosition;
-		float mLeftBlobAnimationState;
+				
+		Vector2 mBlobPosition[MAX_PLAYERS];
+		float mBlobAnimationState[MAX_PLAYERS];
 		Vector2 mRightBlobPosition;
 		float mRightBlobAnimationState;
 
