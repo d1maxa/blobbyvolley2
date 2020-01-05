@@ -186,6 +186,7 @@ const char* OptionState::getStateName() const
 }
 
 OptionPlusState::OptionPlusState(std::vector<std::string> scriptNames)
+	:mScriptNames(scriptNames)
 {
 	mOptionConfig.loadFile("config.xml");
 	mPlayerOptions[LEFT_PLAYER_2] = 0;
@@ -198,8 +199,7 @@ OptionPlusState::OptionPlusState(std::vector<std::string> scriptNames)
 	// hack. we cant use something like push_front, though
 	mScriptNames.push_back("Human");
 	std::swap(mScriptNames[0], mScriptNames[mScriptNames.size() - 1]);
-	*/
-	mScriptNames = scriptNames;
+	*/	
 
 	for (unsigned int i = 0; i < mScriptNames.size(); ++i)
 	{
@@ -726,9 +726,9 @@ const char* GraphicOptionsPlusState::getStateName() const
 }
 
 InputOptionsState::InputOptionsState(bool primary)
-{
-	mPrimary = primary;
-	mSetKeyboard = 0;
+	:	mPrimary(primary),
+		mSetKeyboard(0)
+{	
 	mOptionConfig.loadFile("inputconfig.xml");
 	if (primary)
 	{
@@ -923,8 +923,8 @@ void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastAc
 {
 	IMGUI& imgui = IMGUI::getSingleton();
 		
-	std::string& device = (player % 2 == 0) ? mLeftDevice : mRightDevice;	
-	int base_x = (player % 2 == 0) ? 0 : 400;
+	std::string& device = (player % 2) ? mRightDevice : mLeftDevice;
+	int base_x = (player % 2) ? 400 : 0;
 
 	TextManager::STRING p_str;
 	
@@ -975,7 +975,7 @@ void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastAc
 	//if mouse device is selected:
 	if (device == "mouse")
 	{
-		handleMouseInput(base_x, mouse, (player % 2 == 0) ? mLeftMouseSensitivity : mRightMouseSensitivity);
+		handleMouseInput(base_x, mouse, (player % 2) ? mRightMouseSensitivity : mLeftMouseSensitivity);
 	}
 	if ((mouse == -2) && (InputManager::getSingleton()->getLastMouseButton() == -1))
 		mouse = -1;

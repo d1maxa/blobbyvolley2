@@ -33,11 +33,9 @@ std::shared_ptr<InputSource> InputSourceFactory::createInputSource( std::shared_
 {	
 	try
 	{
-		auto prefix = UserConfig::getPlayerPrefix(side);
-		//int playerType = config->getInteger(prefix + "_player_type", side > RIGHT_PLAYER ? -1 : 0);
-		auto playerName = config->getString(prefix + "_player_name", "none");
+		std::string prefix = UserConfig::getPlayerPrefix(side);				
 
-		if (playerName == "none")
+		if (!config->getBool(prefix + "_player_enabled", true))
 			return nullptr;
 
 		// these operations may throw, i.e., when the script is not found (should not happen)
@@ -46,28 +44,9 @@ std::shared_ptr<InputSource> InputSourceFactory::createInputSource( std::shared_
 		{
 			return std::make_shared<LocalInputSource>(side);
 		}
-		else
-		{
-			return std::make_shared<ScriptedInputSource>("scripts/" + config->getString(prefix + "_script_name"),
-				side, config->getInteger(prefix + "_script_strength"));
-		}
 
-		/*
-		switch (playerName)
-		{
-		case NO_PLAYER:
-			return nullptr;
-
-		// these operations may throw, i.e., when the script is not found (should not happen)
-		//  or has errors
-		case HUMAN_PLAYER:
-			return std::make_shared<LocalInputSource>(side);
-
-		case SCRIPT_PLAYER:
-			return std::make_shared<ScriptedInputSource>("scripts/" + config->getString(prefix + "_script_name"),
-				side, config->getInteger(prefix + "_script_strength"));		
-		}		
-		*/
+		return std::make_shared<ScriptedInputSource>("scripts/" + config->getString(prefix + "_script_name"),
+		                                             side, config->getInteger(prefix + "_script_strength"));
 	} catch (std::exception& e)
 	{
 		/// \todo REWORK ERROR REPORTING

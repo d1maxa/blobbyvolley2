@@ -39,7 +39,7 @@ DuelMatch::DuelMatch(bool remote, std::string rules, int score_to_win) :
 		mLogic(createGameLogic(rules, this, score_to_win == 0 ? IUserConfigReader::createUserConfigReader("config.xml")->getInteger("scoretowin") : score_to_win)),
 		mPaused(false),
 		mRemote(remote)
-{
+{	
 	mPhysicWorld.reset( new PhysicWorld() );
 
 	setInputSources(std::make_shared<InputSource>(), std::make_shared<InputSource>());
@@ -65,7 +65,7 @@ DuelMatch::DuelMatch(bool remote, std::string rules, bool playersEnabled[4], int
 	}
 
 	if (!mRemote)
-		mPhysicWorld->setEventCallback([this](const MatchEvent& event) { mEvents.push_back(event); });		
+		mPhysicWorld->setEventCallback([this](const MatchEvent& event) { mEvents.push_back(event); });
 }
 
 
@@ -220,6 +220,7 @@ PlayerSide DuelMatch::winningPlayer() const
 	return mLogic->getWinningPlayer();
 }
 
+//todo ???
 int DuelMatch::getHitcount(PlayerSide player) const
 {
 	if (player == LEFT_PLAYER)
@@ -263,7 +264,7 @@ bool DuelMatch::getBlobJump(PlayerSide player) const
 
 Vector2 DuelMatch::getBlobPosition(PlayerSide player) const
 {
-	if (player == LEFT_PLAYER || player == RIGHT_PLAYER)
+	if (player >= LEFT_PLAYER && player < MAX_PLAYERS)
 		return mPhysicWorld->getBlobPosition(player);
 	else
 		return Vector2(0.0, 0.0);
@@ -271,7 +272,7 @@ Vector2 DuelMatch::getBlobPosition(PlayerSide player) const
 
 Vector2 DuelMatch::getBlobVelocity(PlayerSide player) const
 {
-	if (player == LEFT_PLAYER || player == RIGHT_PLAYER)
+	if (player >= LEFT_PLAYER && player < MAX_PLAYERS)
 		return mPhysicWorld->getBlobVelocity(player);
 	else
 		return Vector2(0.0, 0.0);
@@ -296,12 +297,12 @@ void DuelMatch::setState(const DuelMatchState& state)
 {
 	mPhysicWorld->setState(state.worldState);
 	mLogic->setState(state.logicState);
-
-	mTransformedInput[LEFT_PLAYER] = state.playerInput[LEFT_PLAYER];
-	mTransformedInput[RIGHT_PLAYER] = state.playerInput[RIGHT_PLAYER];
-
-	mInputSources[LEFT_PLAYER]->setInput( mTransformedInput[LEFT_PLAYER] );
-	mInputSources[RIGHT_PLAYER]->setInput( mTransformedInput[RIGHT_PLAYER] );
+	
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		mTransformedInput[i] = state.playerInput[i];
+		mInputSources[i]->setInput(mTransformedInput[i]);		
+	}	
 }
 
 void DuelMatch::trigger( const MatchEvent& event )
@@ -314,9 +315,11 @@ DuelMatchState DuelMatch::getState() const
 	DuelMatchState state;
 	state.worldState = mPhysicWorld->getState();
 	state.logicState = mLogic->getState();
-	state.playerInput[LEFT_PLAYER] = mTransformedInput[LEFT_PLAYER];
-	state.playerInput[RIGHT_PLAYER] = mTransformedInput[RIGHT_PLAYER];
 
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		state.playerInput[i] = mTransformedInput[i];
+	}
 
 	return state;
 }

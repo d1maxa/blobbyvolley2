@@ -103,13 +103,13 @@ void PlayerInputAbs::setTarget( short target, PlayerSide player )
 	mFlags &= F_JUMP;	// reset everything but the jump flag, i.e. no left/right and no relative
 	mTarget = target;
 
-	if(player == LEFT_PLAYER )
-	{
-		setLeft(true);
-	}
-	if(player == RIGHT_PLAYER )
+	if(player % 2)
 	{
 		setRight(true);
+	}
+	else
+	{
+		setLeft(true);
 	}
 }
 
@@ -129,7 +129,7 @@ PlayerInput PlayerInputAbs::toPlayerInput( const DuelMatch* match ) const
 	if( mFlags & F_RELATIVE)
 		return PlayerInput( mFlags & F_LEFT, mFlags & F_RIGHT, mFlags & F_JUMP );
 	else
-	{
+	{		
 		bool left = false;
 		bool right = false;
 

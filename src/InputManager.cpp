@@ -66,12 +66,7 @@ InputDevice* InputManager::beginGame(PlayerSide side) const
 	// Move Mouse to default position
 	SDL_WarpMouseInWindow(window, 400, 300);
 
-	std::string prefix;
-	if (side == LEFT_PLAYER)
-		prefix = "left_blobby_";
-
-	if (side == RIGHT_PLAYER)
-		prefix = "right_blobby_";
+	std::string prefix = UserConfig::getPlayerPrefix(side) + "_blobby_";	
 
 	UserConfig config;
 	///  \todo we need only read only access here!

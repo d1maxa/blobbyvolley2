@@ -156,7 +156,7 @@ class IGameLogic: public ObjectCounter<IGameLogic>
 
 		/// convert player side into array index
 		static inline int side2index(PlayerSide side)
-		{
+		{			
 			return side == NO_PLAYER ? MAX_PLAYERS : side - LEFT_PLAYER;
 		}
 

@@ -67,11 +67,10 @@ class UserConfig: public IUserConfigReader, public ObjectCounter<UserConfig>
 
 		static inline std::string getPlayerPrefix(PlayerSide side)
 		{
-			std::string prefix = side % 2 ? "right" : "left";			
+			std::string prefix = (side % 2) ? "right" : "left";
 			if (side > RIGHT_PLAYER)
 			{
-				prefix += "_";
-				prefix += std::to_string(side);
+				prefix += "_" + std::to_string(side);				
 			}
 			return prefix;
 		}
