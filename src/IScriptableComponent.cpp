@@ -211,7 +211,7 @@ int get_blob_pos(lua_State* state)
 	auto s = getMatch( state );
 	PlayerSide side = (PlayerSide)lua_toint(state, -1);
 	lua_pop(state, 1);
-	assert( side == LEFT_PLAYER || side == RIGHT_PLAYER );
+	assert(side >= LEFT_PLAYER && side < MAX_PLAYERS);
 	return lua_pushvector(state, s->getBlobPosition(side), VectorType::POSITION);
 }
 
@@ -220,7 +220,7 @@ int get_blob_vel(lua_State* state)
 	auto s = getMatch( state );
 	PlayerSide side = (PlayerSide)lua_toint(state, -1);
 	lua_pop(state, 1);
-	assert( side == LEFT_PLAYER || side == RIGHT_PLAYER );
+	assert(side >= LEFT_PLAYER && side < MAX_PLAYERS);
 	return lua_pushvector(state, s->getBlobVelocity(side), VectorType::VELOCITY);
 }
 
@@ -229,7 +229,7 @@ int get_score( lua_State* state )
 	auto s = getMatch( state );
 	PlayerSide side = (PlayerSide)lua_toint(state, -1);
 	lua_pop(state, 1);
-	assert( side == LEFT_PLAYER || side == RIGHT_PLAYER );
+	assert(side >= LEFT_PLAYER && side < MAX_PLAYERS);
 	lua_pushinteger(state, s->getScore(side));
 	return 1;
 }
@@ -239,7 +239,7 @@ int get_touches( lua_State* state )
 	auto s = getMatch( state );
 	PlayerSide side = (PlayerSide)lua_toint(state, -1);
 	lua_pop(state, 1);
-	assert( side == LEFT_PLAYER || side == RIGHT_PLAYER );
+	assert( side >= LEFT_PLAYER && side < MAX_PLAYERS );
 	lua_pushinteger(state, s->getTouches(side));
 	return 1;
 }

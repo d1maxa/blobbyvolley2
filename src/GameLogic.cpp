@@ -72,8 +72,10 @@ IGameLogic::IGameLogic( int stw )
 	mClock.start();
 	mScores[LEFT_PLAYER] = 0;
 	mScores[RIGHT_PLAYER] = 0;
-	mTouches[LEFT_PLAYER] = 0;
-	mTouches[RIGHT_PLAYER] = 0;
+
+	clearTouches(LEFT_PLAYER);
+	clearTouches(RIGHT_PLAYER);	
+
 	mSquish[LEFT_PLAYER] = 0;
 	mSquish[RIGHT_PLAYER] = 0;
 }
@@ -85,7 +87,8 @@ IGameLogic::~IGameLogic()
 
 int IGameLogic::getTouches(PlayerSide side) const
 {
-	return mTouches[side2index(side)];
+	//return mTouches[side2index(side)];
+	return mTeamTouches[side2index(side)];
 }
 
 int IGameLogic::getScore(PlayerSide side) const
@@ -176,8 +179,8 @@ void IGameLogic::step( const DuelMatchState& state )
 
 	if(mClock.isRunning())
 	{
-		--mSquish[0];
-		--mSquish[1];
+		--mSquish[LEFT_PLAYER];
+		--mSquish[RIGHT_PLAYER];
 		--mSquishWall;
 		--mSquishGround;
 
@@ -217,7 +220,8 @@ void IGameLogic::onBallHitsGround(PlayerSide side)
 	// otherwise, set the squish value
 	mSquishGround = SQUISH_TOLERANCE;
 
-	mTouches[other_side(side)] = 0;
+	//mTouches[other_side(side)] = 0;
+	clearTouches(other_side(side));	
 
 	OnBallHitsGroundHandler(side);
 }
@@ -235,7 +239,8 @@ bool IGameLogic::isGameRunning() const
 bool IGameLogic::isCollisionValid(PlayerSide side) const
 {
 	// check whether the ball is squished
-	return mSquish[side2index(side)] <= 0;
+	//return mSquish[side2index(side)] <= 0;
+	return mSquish[side % 2] <= 0;
 }
 
 bool IGameLogic::isGroundCollisionValid() const
@@ -256,7 +261,8 @@ void IGameLogic::onBallHitsPlayer(PlayerSide side)
 		return;
 
 	// otherwise, set the squish value
-	mSquish[side2index(side)] = SQUISH_TOLERANCE;
+	//mSquish[side2index(side)] = SQUISH_TOLERANCE;
+	mSquish[side % 2] = SQUISH_TOLERANCE;
 	// now, the other blobby has to accept the new hit!
 	mSquish[side2index(other_side(side))] = 0;
 
@@ -265,11 +271,13 @@ void IGameLogic::onBallHitsPlayer(PlayerSide side)
 
 	// count the touches
 	mTouches[side2index(side)]++;
+	mTeamTouches[side % 2]++;
 	OnBallHitsPlayerHandler(side);
 
 	// reset other players touches after OnBallHitsPlayerHandler is called, so
 	// we have still access to its old value inside the handler function
-	mTouches[side2index(other_side(side))] = 0;
+	//mTouches[side2index(other_side(side))] = 0;
+	clearTouches(other_side(side));
 }
 
 void IGameLogic::onBallHitsWall(PlayerSide side)
@@ -304,15 +312,27 @@ void IGameLogic::score(PlayerSide side, int amount)
 	mWinningPlayer = checkWin();
 }
 
+void IGameLogic::clearTouches(PlayerSide side)
+{
+	mTeamTouches[side] = 0;
+	for (int i = side; i < MAX_PLAYERS; i+=2)
+	{
+		mTouches[i] = 0;
+	}
+}
+
 void IGameLogic::onError(PlayerSide errorSide, PlayerSide serveSide)
 {
 	mLastError = errorSide;
 	mIsBallValid = false;
 
-	mTouches[0] = 0;
-	mTouches[1] = 0;
-	mSquish[0] = 0;
-	mSquish[1] = 0;
+	//mTouches[0] = 0;
+	//mTouches[1] = 0;
+	clearTouches(LEFT_PLAYER);
+	clearTouches(RIGHT_PLAYER);
+
+	mSquish[LEFT_PLAYER] = 0;
+	mSquish[RIGHT_PLAYER] = 0;
 	mSquishWall = 0;
 	mSquishGround = 0;
 

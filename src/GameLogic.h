@@ -152,34 +152,32 @@ class IGameLogic: public ObjectCounter<IGameLogic>
 		/// it increments the points of that team
 		void score(PlayerSide side, int amount);
 
+		/// clear touches count for all player on side
+		void clearTouches(PlayerSide side);
+
 		// helper functions
 
 		/// convert player side into array index
 		static inline int side2index(PlayerSide side)
 		{			
+			//todo always return the same???
 			return side == NO_PLAYER ? MAX_PLAYERS : side - LEFT_PLAYER;
 		}
 
 		/// determine the opposite player side
 		static inline PlayerSide other_side(PlayerSide side)
 		{
-			switch(side)
-			{
-				case LEFT_PLAYER:
-					return RIGHT_PLAYER;
-				case RIGHT_PLAYER:
-					return LEFT_PLAYER;
-				default:
-					assert(0);
-			}
+			if (side % 2)
+				return LEFT_PLAYER;
+			
+			return RIGHT_PLAYER;			
 		}
 
 		/// this is called when a player makes a mistake
 		void onError(PlayerSide errorSide, PlayerSide serveSide);
+		
 
-
-
-		/// thi function can change input made by a player
+		/// this function can change input made by a player
 		virtual PlayerInput handleInput(PlayerInput ip, PlayerSide player) = 0;
 
 		/// this function handles ball/player hits
@@ -209,8 +207,10 @@ class IGameLogic: public ObjectCounter<IGameLogic>
 		// data members
 		/// this array contains the scores
 		int mScores[2];
-		/// in this array the touches are counted
-		int mTouches[2];
+		/// in this array the touches are counted per player
+		int mTouches[MAX_PLAYERS];
+		/// in this array the touches are counted per team
+		int mTeamTouches[2];
 
 		/// these are helper arrays to prevent counting hits that happen too fast twice
 		int mSquish[2];

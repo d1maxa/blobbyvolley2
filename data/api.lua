@@ -64,9 +64,8 @@ end
 
 -- gets the opponent of the player identification, i.e. LEFT_PLAYER <-> RIGHT_PLAYER
 function opponent( player ) 
-	if player == LEFT_PLAYER then return RIGHT_PLAYER end
-	if player == RIGHT_PLAYER then return LEFT_PLAYER end
-	return -1
+	if player % 2 == 1 then return LEFT_PLAYER end
+	return RIGHT_PLAYER
 end
 
 -- all combined
