@@ -86,19 +86,18 @@ IGameLogic::~IGameLogic()
 }
 
 int IGameLogic::getTouches(PlayerSide side) const
-{
-	//return mTouches[side2index(side)];
-	return mTeamTouches[side2index(side)];
+{	
+	return mTouches[side % 2];
 }
 
 int IGameLogic::getScore(PlayerSide side) const
 {
-	return mScores[side2index(side)];
+	return mScores[side % 2];
 }
 
 void IGameLogic::setScore(PlayerSide side, int score)
 {
-	mScores[side2index(side)] = score;
+	mScores[side % 2] = score;
 }
 
 
@@ -238,8 +237,7 @@ bool IGameLogic::isGameRunning() const
 
 bool IGameLogic::isCollisionValid(PlayerSide side) const
 {
-	// check whether the ball is squished
-	//return mSquish[side2index(side)] <= 0;
+	// check whether the ball is squished	
 	return mSquish[side % 2] <= 0;
 }
 
@@ -260,8 +258,7 @@ void IGameLogic::onBallHitsPlayer(PlayerSide side)
 	if(!isCollisionValid(side))
 		return;
 
-	// otherwise, set the squish value
-	//mSquish[side2index(side)] = SQUISH_TOLERANCE;
+	// otherwise, set the squish value	
 	mSquish[side % 2] = SQUISH_TOLERANCE;
 	// now, the other blobby has to accept the new hit!
 	mSquish[side2index(other_side(side))] = 0;
@@ -269,9 +266,8 @@ void IGameLogic::onBallHitsPlayer(PlayerSide side)
 	// set the ball activity
 	mIsGameRunning = true;
 
-	// count the touches
-	mTouches[side2index(side)]++;
-	mTeamTouches[side % 2]++;
+	// count the touches	
+	mTouches[side % 2]++;
 	OnBallHitsPlayerHandler(side);
 
 	// reset other players touches after OnBallHitsPlayerHandler is called, so
@@ -303,8 +299,8 @@ void IGameLogic::onBallHitsNet(PlayerSide side)
 }
 
 void IGameLogic::score(PlayerSide side, int amount)
-{
-	int index = side2index(side);
+{	
+	int index = side % 2;
 	mScores[index] += amount;
 	if (mScores[index] < 0)
 		mScores[index] = 0;
@@ -314,23 +310,15 @@ void IGameLogic::score(PlayerSide side, int amount)
 
 void IGameLogic::clearTouches(PlayerSide side)
 {
-	mTeamTouches[side] = 0;
-	for (int i = side; i < MAX_PLAYERS; i+=2)
-	{
-		mTouches[i] = 0;
-	}
+	mTouches[side] = 0;	
 }
 
 void IGameLogic::onError(PlayerSide errorSide, PlayerSide serveSide)
 {
 	mLastError = errorSide;
 	mIsBallValid = false;
-
-	//mTouches[0] = 0;
-	//mTouches[1] = 0;
 	clearTouches(LEFT_PLAYER);
 	clearTouches(RIGHT_PLAYER);
-
 	mSquish[LEFT_PLAYER] = 0;
 	mSquish[RIGHT_PLAYER] = 0;
 	mSquishWall = 0;

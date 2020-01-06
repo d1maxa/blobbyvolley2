@@ -207,10 +207,8 @@ class IGameLogic: public ObjectCounter<IGameLogic>
 		// data members
 		/// this array contains the scores
 		int mScores[2];
-		/// in this array the touches are counted per player
-		int mTouches[MAX_PLAYERS];
 		/// in this array the touches are counted per team
-		int mTeamTouches[2];
+		int mTouches[2];		
 
 		/// these are helper arrays to prevent counting hits that happen too fast twice
 		int mSquish[2];
