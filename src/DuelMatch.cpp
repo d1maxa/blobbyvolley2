@@ -241,6 +241,16 @@ int DuelMatch::getTouches(PlayerSide player) const
 	return mLogic->getTouches(player);
 }
 
+int DuelMatch::getPlayersCount(PlayerSide player) const
+{
+	int count = 0;
+	for (int i = player % 2; i < MAX_PLAYERS; i+=2)
+	{
+		if (mPlayersEnabled[i])
+			count++;
+	}
+	return count;
+}
 
 int DuelMatch::getScoreToWin() const
 {

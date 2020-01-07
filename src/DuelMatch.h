@@ -87,6 +87,9 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 		PlayerSide getServingPlayer() const;
 		int getTouches(PlayerSide player) const;
 
+		// Get players count in player's team
+		int getPlayersCount(PlayerSide player) const;
+
 		int getHitcount(PlayerSide player) const;
 
 		Vector2 getBallPosition() const;

@@ -244,6 +244,16 @@ int get_touches( lua_State* state )
 	return 1;
 }
 
+int get_players_count(lua_State* state)
+{
+	auto s = getMatch(state);
+	PlayerSide side = (PlayerSide)lua_toint(state, -1);
+	lua_pop(state, 1);
+	assert(side >= LEFT_PLAYER && side < MAX_PLAYERS);
+	lua_pushinteger(state, s->getPlayersCount(side));
+	return 1;
+}
+
 int get_ball_valid( lua_State* state )
 {
 	auto s = getMatch( state );
@@ -369,6 +379,7 @@ void IScriptableComponent::setGameFunctions()
 	lua_register(mState, "get_blob_vel", get_blob_vel);
 	lua_register(mState, "get_score", get_score);
 	lua_register(mState, "get_touches", get_touches);
+	lua_register(mState, "get_players_count", get_players_count);
 	lua_register(mState, "is_ball_valid", get_ball_valid);
 	lua_register(mState, "is_game_running", get_game_running);
 	lua_register(mState, "get_serving_player", get_serving_player);
