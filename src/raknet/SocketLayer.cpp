@@ -184,10 +184,12 @@ SOCKET SocketLayer::CreateBoundSocket(unsigned short port, bool blockingSocket, 
 }
 
 const char* SocketLayer::DomainNameToIP(const char *domainName)
-{
+{	
+#ifndef _WIN32
 	int getaddrinfo(const char *node, const char *service,
                 const struct addrinfo *hints,
                 struct addrinfo **res);
+#endif
 	struct hostent * phe = gethostbyname( domainName );
 
 	if ( phe == 0 || phe->h_addr_list[ 0 ] == 0 )
