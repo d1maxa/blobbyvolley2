@@ -167,6 +167,7 @@ class TextManager
 			OP_STRONG,
 			OP_RULES,
 			OP_ENABLED,
+			OP_BLOB_COLLISIONS,
 
 			UPDATE_NOTIFICATION,
 

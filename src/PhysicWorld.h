@@ -39,7 +39,7 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 
 	public:
 		PhysicWorld();
-		PhysicWorld(bool playersEnabled[MAX_PLAYERS]);
+		PhysicWorld(bool playersEnabled[MAX_PLAYERS], bool blobCollisions);
 		~PhysicWorld();
 
 		// set the callback
@@ -82,11 +82,17 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 		inline bool playerTopBallCollision(int player) const;
 		inline bool playerBottomBallCollision(int player) const;
 
+		inline bool playerTopBottomCollision(int player, int player2) const;
+		inline bool playerBottomTopCollision(int player, int player2) const;
+		inline bool playerBottomBottomCollision(int player, int player2) const;
+
 		// Do all blobby-related physic stuff which is independent from states
 		void handleBlob(PlayerSide player, PlayerInput input);
 
 		// Detect and handle ball to blobby collisions
 		bool handleBlobbyBallCollision(PlayerSide player);
+		// Detect and handle blobby to blobby collisions
+		bool handleBlobbiesCollision(PlayerSide player, PlayerSide player2);
 		// calculate ball impacts vs wall, ground and net
 		void handleBallWorldCollisions();
 
@@ -97,6 +103,7 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 		Vector2 mBallVelocity;
 		
 		bool mPlayersEnabled[MAX_PLAYERS];
+		bool mBlobCollisions;
 
 		float mBallRotation;
 		float mBallAngularVelocity;

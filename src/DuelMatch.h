@@ -148,6 +148,7 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 		PlayerIdentity mPlayers[MAX_PLAYERS];
 	    //first two are always true
 		bool mPlayersEnabled[MAX_PLAYERS];
+		bool mBlobCollisions;
 
 		GameLogicPtr mLogic;
 

@@ -51,12 +51,16 @@ DuelMatch::DuelMatch(bool remote, std::string rules, int score_to_win) :
 	mPlayersEnabled[RIGHT_PLAYER] = true;
 }
 
-DuelMatch::DuelMatch(bool remote, std::string rules, bool playersEnabled[4], int score_to_win) :
-		mLogic(createGameLogic(rules, this, score_to_win == 0 ? IUserConfigReader::createUserConfigReader("config.xml")->getInteger("scoretowin") : score_to_win)),
+DuelMatch::DuelMatch(bool remote, std::string rules, bool playersEnabled[MAX_PLAYERS], int score_to_win) :		
 		mPaused(false),
 		mRemote(remote)
 {
-	mPhysicWorld.reset(new PhysicWorld(playersEnabled));
+	auto config = IUserConfigReader::createUserConfigReader("config.xml");
+	mBlobCollisions = config->getBool("blob_collisions");
+	if (score_to_win == 0)
+		score_to_win = config->getInteger("scoretowin");
+	mLogic = createGameLogic(rules, this, score_to_win);
+	mPhysicWorld.reset(new PhysicWorld(playersEnabled, mBlobCollisions));
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
@@ -106,7 +110,7 @@ void DuelMatch::setInputSource(PlayerSide player, std::shared_ptr<InputSource> i
 
 void DuelMatch::reset()
 {	
-	mPhysicWorld.reset(new PhysicWorld(mPlayersEnabled));
+	mPhysicWorld.reset(new PhysicWorld(mPlayersEnabled, mBlobCollisions));
 	mLogic = mLogic->clone();
 }
 

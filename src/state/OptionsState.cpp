@@ -193,6 +193,7 @@ OptionPlusState::OptionPlusState(std::vector<std::string> scriptNames)
 	mPlayerOptions[RIGHT_PLAYER_2] = 0;
 	std::string leftScript = mOptionConfig.getString("left_2_script_name");
 	std::string rightScript = mOptionConfig.getString("right_2_script_name");
+	mBlobCollisions = mOptionConfig.getBool("blobcollisions");
 
 	/*
 	mScriptNames = FileSystem::getSingleton().enumerateFiles("scripts", ".lua");
@@ -259,6 +260,8 @@ void OptionPlusState::save()
 	mOptionConfig.setBool("left_2_player_enabled", mPlayerEnabled[LEFT_PLAYER_2]);
 	mOptionConfig.setBool("right_2_player_enabled", mPlayerEnabled[RIGHT_PLAYER_2]);
 
+	mOptionConfig.setBool("blob_collisions", mBlobCollisions);
+
 	mOptionConfig.saveFile("config.xml");
 }
 
@@ -302,6 +305,16 @@ void OptionPlusState::step_impl()
 		imgui.doImage(GEN_ID, Vector2(54.0, 432.0), "gfx/pfeil_rechts.bmp");
 	else
 		imgui.doImage(GEN_ID, Vector2(204.0, 432.0), "gfx/pfeil_rechts.bmp");
+
+	imgui.doText(GEN_ID, Vector2(34.0, 450), TextManager::OP_BLOB_COLLISIONS);
+	if (imgui.doButton(GEN_ID, Vector2(72.0, 480), TextManager::LBL_YES))
+		mBlobCollisions = true;
+	if (imgui.doButton(GEN_ID, Vector2(220.0, 480), TextManager::LBL_NO))
+		mBlobCollisions = false;
+	if (mBlobCollisions)
+		imgui.doImage(GEN_ID, Vector2(54.0, 492.0), "gfx/pfeil_rechts.bmp");
+	else
+		imgui.doImage(GEN_ID, Vector2(204.0, 492.0), "gfx/pfeil_rechts.bmp");
 
 	imgui.doText(GEN_ID, Vector2(434.0, 390), TextManager::OP_ENABLED);
 	if (imgui.doButton(GEN_ID, Vector2(472.0, 420), TextManager::LBL_YES))

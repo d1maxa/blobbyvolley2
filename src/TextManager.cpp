@@ -287,6 +287,7 @@ void TextManager::setDefault()
 	mStrings[OP_STRONG] = "strong";
 	mStrings[OP_RULES] = "rules:";
 	mStrings[OP_ENABLED] = "enabled";
+	mStrings[OP_BLOB_COLLISIONS] = "blob collisions";
 
 	mStrings[UPDATE_NOTIFICATION] = "please visit http://blobby.sourceforge.net/ for a new version of blobby volley";
 }

@@ -58,9 +58,15 @@ PhysicWorld::PhysicWorld()
 	mPlayersEnabled[RIGHT_PLAYER] = true;
 }
 
-PhysicWorld::PhysicWorld(bool playersEnabled[4]) : PhysicWorld()	
+PhysicWorld::PhysicWorld(bool playersEnabled[MAX_PLAYERS], bool blobCollisions)
+	: mBallPosition(Vector2(200, STANDARD_BALL_HEIGHT))
+	, mBallRotation(0)
+	, mBallAngularVelocity(STANDARD_BALL_ANGULAR_VELOCITY)
+	, mLastHitIntensity(0)
+	, mBlobCollisions(blobCollisions)
+	, mCallback([](const MatchEvent& me) {})
 {
-	for (int i = LEFT_PLAYER_2; i < MAX_PLAYERS; i++)
+	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
 		mPlayersEnabled[i] = playersEnabled[i];
 
@@ -110,6 +116,30 @@ inline bool PhysicWorld::circleCircleCollision(const Vector2& pos1, float rad1, 
 	Vector2 distance = pos1 - pos2;
 	float mxdist = rad1 + rad2;
 	return distance.lengthSQ() < mxdist * mxdist;
+}
+
+bool PhysicWorld::playerTopBottomCollision(int player, int player2) const
+{
+	Vector2 blobpos{ mBlobPosition[player].x, mBlobPosition[player].y - BLOBBY_UPPER_SPHERE };
+	Vector2 blobpos2{ mBlobPosition[player2].x, mBlobPosition[player2].y + BLOBBY_LOWER_SPHERE };
+	return circleCircleCollision(blobpos2, BLOBBY_LOWER_RADIUS,
+		blobpos, BLOBBY_UPPER_RADIUS);
+}
+
+bool PhysicWorld::playerBottomTopCollision(int player, int player2) const
+{
+	Vector2 blobpos{ mBlobPosition[player].x, mBlobPosition[player].y + BLOBBY_LOWER_SPHERE };
+	Vector2 blobpos2{ mBlobPosition[player2].x, mBlobPosition[player2].y - BLOBBY_UPPER_SPHERE };
+	return circleCircleCollision(blobpos2, BLOBBY_UPPER_RADIUS,
+		blobpos, BLOBBY_LOWER_RADIUS);
+}
+
+inline bool PhysicWorld::playerBottomBottomCollision(int player, int player2) const
+{
+	Vector2 blobpos{ mBlobPosition[player].x, mBlobPosition[player].y + BLOBBY_LOWER_SPHERE };
+	Vector2 blobpos2{ mBlobPosition[player2].x, mBlobPosition[player2].y + BLOBBY_LOWER_SPHERE };
+	return circleCircleCollision(blobpos2, BLOBBY_LOWER_RADIUS,
+		blobpos, BLOBBY_LOWER_RADIUS);
 }
 
 float PhysicWorld::getBallRotation() const
@@ -212,9 +242,12 @@ bool PhysicWorld::handleBlobbyBallCollision(PlayerSide player)
 	{
 		circlepos.y += BLOBBY_LOWER_SPHERE;
 	}
-	 else if(playerTopBallCollision(player))
+	else if(playerTopBallCollision(player))
 	{
-		circlepos.y -= BLOBBY_LOWER_SPHERE;
+		//maybe error?
+		//circlepos.y -= BLOBBY_LOWER_SPHERE;
+		circlepos.y -= BLOBBY_UPPER_SPHERE;
+
 	} else
 	{	// no impact!
 		return false;
@@ -231,6 +264,67 @@ bool PhysicWorld::handleBlobbyBallCollision(PlayerSide player)
 	mBallVelocity = mBallVelocity.normalise();
 	mBallVelocity = mBallVelocity.scale(BALL_COLLISION_VELOCITY);
 	mBallPosition += mBallVelocity;
+	return true;
+}
+
+bool PhysicWorld::handleBlobbiesCollision(PlayerSide player, PlayerSide player2)
+{
+	/*
+	Vector2 circlepos = mBlobPosition[player];
+	Vector2 circlepos2 = mBlobPosition[player2];
+	// check for impact
+	if (playerBottomBottomCollision(player, player2))
+	{		
+		circlepos.y += BLOBBY_LOWER_SPHERE;
+		circlepos2.y += BLOBBY_LOWER_SPHERE;		
+	}
+	else if (playerTopBottomCollision(player, player2))
+	{		
+		circlepos.y -= BLOBBY_UPPER_SPHERE;
+		circlepos2.y += BLOBBY_LOWER_SPHERE;
+	}
+	else if (playerBottomTopCollision(player, player2))
+	{		
+		circlepos.y += BLOBBY_LOWER_SPHERE;
+		circlepos2.y -= BLOBBY_UPPER_SPHERE;
+	}
+	else
+	{	// no impact!
+		return false;
+	}*/
+
+	if (!playerBottomBottomCollision(player, player2) &&
+		!playerTopBottomCollision(player, player2) &&
+		!playerBottomTopCollision(player, player2))
+		// no impact!
+		return false;
+
+	// ok, if we get here, there actually was a collision
+
+	// calculate hit intensity
+	/*
+	auto hitIntensity = Vector2(mBlobVelocity[player2], mBlobVelocity[player]).length() / 25.0;	
+	//mLastHitIntensity = Vector2(mBallVelocity, mBlobVelocity[player]).length() / 25.0;
+	hitIntensity = hitIntensity > 1.0 ? 1.0 : hitIntensity;
+	*/
+
+	// set ball velocity
+	/*
+	mBallVelocity = -Vector2(mBallPosition, circlepos);
+	mBallVelocity = mBallVelocity.normalise();
+	mBallVelocity = mBallVelocity.scale(BALL_COLLISION_VELOCITY);
+	mBallPosition += mBallVelocity;	*/
+	mBlobVelocity[player2] = -Vector2(mBlobPosition[player2], mBlobPosition[player]);
+	mBlobVelocity[player2] = mBlobVelocity[player2].normalise();
+	mBlobVelocity[player2] = mBlobVelocity[player2].scale(BALL_COLLISION_VELOCITY);	
+		
+	mBlobVelocity[player] = -Vector2(mBlobPosition[player], mBlobPosition[player2]);
+	mBlobVelocity[player] = mBlobVelocity[player].normalise();
+	mBlobVelocity[player] = mBlobVelocity[player].scale(BALL_COLLISION_VELOCITY);
+
+	mBlobPosition[player2] += mBlobVelocity[player2];
+	mBlobPosition[player] += mBlobVelocity[player];
+
 	return true;
 }
 
@@ -327,7 +421,21 @@ void PhysicWorld::step(PlayerInput inputs[MAX_PLAYERS], bool isBallValid, bool i
 			if (mPlayersEnabled[i] &&
 				handleBlobbyBallCollision((PlayerSide)i))
 				mCallback(MatchEvent{ MatchEvent::BALL_HIT_BLOB, (PlayerSide)i, mLastHitIntensity });
-		}		
+		}
+
+		if (mBlobCollisions)
+		{
+			for (int i = 0; i < MAX_PLAYERS - 2; i++)
+			{
+				for (int j = i + 2; j < MAX_PLAYERS; j += 2)
+				{
+					if (mPlayersEnabled[i] && mPlayersEnabled[j] & handleBlobbiesCollision(PlayerSide(i), PlayerSide(j)))
+					{
+
+					}
+				}
+			}
+		}
 	}
 
 	handleBallWorldCollisions();	

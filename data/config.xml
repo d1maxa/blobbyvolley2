@@ -40,6 +40,7 @@
 	<var name="scoretowin" value="15"/>
 	<var name="showfps" value="true"/>
 	<var name="blood" value="false"/>
+	<var name="blob_collisions" value="true"/>
 	<var name="background" value="strand2.bmp"/>
 	<var name="network_side" value="1"/>
 	<var name="use_remote_color" value="true"/>
