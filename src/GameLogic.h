@@ -154,6 +154,8 @@ class IGameLogic: public ObjectCounter<IGameLogic>
 
 		/// clear touches count for all player on side
 		void clearTouches(PlayerSide side);
+		/// clear squishes count for all player on side
+		void clearSquishes(PlayerSide side);
 
 		// helper functions
 
@@ -168,9 +170,9 @@ class IGameLogic: public ObjectCounter<IGameLogic>
 		static inline PlayerSide other_side(PlayerSide side)
 		{
 			if (side % 2)
-				return LEFT_PLAYER;
+				return LEFT_SIDE;
 			
-			return RIGHT_PLAYER;			
+			return RIGHT_SIDE;			
 		}
 
 		/// this is called when a player makes a mistake
@@ -206,12 +208,12 @@ class IGameLogic: public ObjectCounter<IGameLogic>
 	private:
 		// data members
 		/// this array contains the scores
-		int mScores[2];
+		int mScores[NUM_SIDES];
 		/// in this array the touches are counted per team
-		int mTouches[2];		
+		int mTouches[NUM_SIDES];
 
 		/// these are helper arrays to prevent counting hits that happen too fast twice
-		int mSquish[2];
+		int mSquish[MAX_PLAYERS];
 		int mSquishWall;	// also for net squishes
 		int mSquishGround;
 

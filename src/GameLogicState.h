@@ -30,7 +30,7 @@ struct GameLogicState
 {
 	unsigned int leftScore;
 	unsigned int rightScore;
-	unsigned int hitCount[2];
+	unsigned int hitCount[NUM_SIDES];
 	PlayerSide servingPlayer;
 	PlayerSide winningPlayer = NO_PLAYER;
 

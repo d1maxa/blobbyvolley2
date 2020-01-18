@@ -73,8 +73,12 @@ const std::string DEFAULT_RULES_FILE = "default.lua";
 enum PlayerSide
 {
 	NO_PLAYER = -1,
+	NO_SIDE = -1,
 	LEFT_PLAYER = 0,
+	LEFT_SIDE = 0,
 	RIGHT_PLAYER = 1,
+	RIGHT_SIDE = 1,
+	NUM_SIDES = 2,
 	LEFT_PLAYER_2 = 2,
 	RIGHT_PLAYER_2 = 3,
 	MAX_PLAYERS // This is always one more than the highest player enum

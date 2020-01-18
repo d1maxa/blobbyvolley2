@@ -96,6 +96,7 @@ class PlayerInputAbs
 		};
 		unsigned char mFlags;
 		short mTarget;
+		PlayerSide mPlayer;
 };
 
 // This operator converts a PlayerInput structure in a packed string

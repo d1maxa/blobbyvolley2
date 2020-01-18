@@ -102,15 +102,7 @@ void PlayerInputAbs::setTarget( short target, PlayerSide player )
 {
 	mFlags &= F_JUMP;	// reset everything but the jump flag, i.e. no left/right and no relative
 	mTarget = target;
-
-	if(player % 2)
-	{
-		setRight(true);
-	}
-	else
-	{
-		setLeft(true);
-	}
+	mPlayer = player;	
 }
 
 void PlayerInputAbs::swapSides()
@@ -131,12 +123,10 @@ PlayerInput PlayerInputAbs::toPlayerInput( const DuelMatch* match ) const
 	else
 	{		
 		bool left = false;
-		bool right = false;
-
-		PlayerSide side = mFlags & F_LEFT ? LEFT_PLAYER : RIGHT_PLAYER;
+		bool right = false;		
 
 		// here we load the current position of the player.
-		float blobpos = match->getBlobPosition(side).x;
+		float blobpos = match->getBlobPosition(mPlayer).x;
 
 		float distance = std::abs(blobpos - mTarget);
 

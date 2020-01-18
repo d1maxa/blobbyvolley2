@@ -70,14 +70,14 @@ IGameLogic::IGameLogic( int stw )
 	// init clock
 	mClock.reset();
 	mClock.start();
-	mScores[LEFT_PLAYER] = 0;
-	mScores[RIGHT_PLAYER] = 0;
+	mScores[LEFT_SIDE] = 0;
+	mScores[RIGHT_SIDE] = 0;
 
-	clearTouches(LEFT_PLAYER);
-	clearTouches(RIGHT_PLAYER);	
+	clearTouches(LEFT_SIDE);
+	clearTouches(RIGHT_SIDE);
 
-	mSquish[LEFT_PLAYER] = 0;
-	mSquish[RIGHT_PLAYER] = 0;
+	clearSquishes(LEFT_SIDE);
+	clearSquishes(RIGHT_SIDE);	
 }
 
 IGameLogic::~IGameLogic()
@@ -178,8 +178,11 @@ void IGameLogic::step( const DuelMatchState& state )
 
 	if(mClock.isRunning())
 	{
-		--mSquish[LEFT_PLAYER];
-		--mSquish[RIGHT_PLAYER];
+		for (int i = 0; i < MAX_PLAYERS; ++i)
+		{
+			--mSquish[i];
+		}
+		
 		--mSquishWall;
 		--mSquishGround;
 
@@ -238,7 +241,7 @@ bool IGameLogic::isGameRunning() const
 bool IGameLogic::isCollisionValid(PlayerSide side) const
 {
 	// check whether the ball is squished	
-	return mSquish[side % 2] <= 0;
+	return mSquish[side] <= 0;
 }
 
 bool IGameLogic::isGroundCollisionValid() const
@@ -259,9 +262,9 @@ void IGameLogic::onBallHitsPlayer(PlayerSide side)
 		return;
 
 	// otherwise, set the squish value	
-	mSquish[side % 2] = SQUISH_TOLERANCE;
-	// now, the other blobby has to accept the new hit!
-	mSquish[side2index(other_side(side))] = 0;
+	mSquish[side] = SQUISH_TOLERANCE;
+	// now, the other blobby has to accept the new hit!	
+	clearSquishes(other_side(side));
 
 	// set the ball activity
 	mIsGameRunning = true;
@@ -313,14 +316,22 @@ void IGameLogic::clearTouches(PlayerSide side)
 	mTouches[side] = 0;	
 }
 
+void IGameLogic::clearSquishes(PlayerSide side)
+{
+	for (int i = side; i < MAX_PLAYERS; i+=2)
+	{
+		mSquish[i] = 0;
+	}
+}
+
 void IGameLogic::onError(PlayerSide errorSide, PlayerSide serveSide)
 {
 	mLastError = errorSide;
 	mIsBallValid = false;
-	clearTouches(LEFT_PLAYER);
-	clearTouches(RIGHT_PLAYER);
-	mSquish[LEFT_PLAYER] = 0;
-	mSquish[RIGHT_PLAYER] = 0;
+	clearTouches(LEFT_SIDE);
+	clearTouches(RIGHT_SIDE);
+	clearSquishes(LEFT_SIDE);
+	clearSquishes(RIGHT_SIDE);	
 	mSquishWall = 0;
 	mSquishGround = 0;
 
@@ -522,8 +533,8 @@ PlayerSide LuaGameLogic::checkWin() const
 		return FallbackGameLogic::checkWin();
 	}
 
-	lua_pushnumber(mState, getScore(LEFT_PLAYER) );
-	lua_pushnumber(mState, getScore(RIGHT_PLAYER) );
+	lua_pushnumber(mState, getScore(LEFT_SIDE) );
+	lua_pushnumber(mState, getScore(RIGHT_SIDE) );
 	if( lua_pcall(mState, 2, 1, 0) )
 	{
 		std::cerr << "Lua Error: " << lua_tostring(mState, -1);
@@ -535,14 +546,14 @@ PlayerSide LuaGameLogic::checkWin() const
 
 	if(won)
 	{
-		if( getScore(LEFT_PLAYER) > getScore(RIGHT_PLAYER) )
-			return LEFT_PLAYER;
+		if( getScore(LEFT_SIDE) > getScore(RIGHT_SIDE) )
+			return LEFT_SIDE;
 
-		if( getScore(LEFT_PLAYER) < getScore(RIGHT_PLAYER) )
-			return RIGHT_PLAYER;
+		if( getScore(LEFT_SIDE) < getScore(RIGHT_SIDE) )
+			return RIGHT_SIDE;
 	}
 
-	return NO_PLAYER;
+	return NO_SIDE;
 }
 
 PlayerInput LuaGameLogic::handleInput(PlayerInput ip, PlayerSide player)
