@@ -193,7 +193,7 @@ OptionPlusState::OptionPlusState(std::vector<std::string> scriptNames)
 	mPlayerOptions[RIGHT_PLAYER_2] = 0;
 	std::string leftScript = mOptionConfig.getString("left_2_script_name");
 	std::string rightScript = mOptionConfig.getString("right_2_script_name");
-	mBlobCollisions = mOptionConfig.getBool("blobcollisions");
+	mBlobCollisions = mOptionConfig.getBool("blob_collisions");
 
 	/*
 	mScriptNames = FileSystem::getSingleton().enumerateFiles("scripts", ".lua");
