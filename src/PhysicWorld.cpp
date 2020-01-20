@@ -244,10 +244,7 @@ bool PhysicWorld::handleBlobbyBallCollision(PlayerSide player)
 	}
 	else if(playerTopBallCollision(player))
 	{
-		//maybe error?
-		//circlepos.y -= BLOBBY_LOWER_SPHERE;
 		circlepos.y -= BLOBBY_UPPER_SPHERE;
-
 	} else
 	{	// no impact!
 		return false;
