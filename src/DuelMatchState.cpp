@@ -45,9 +45,11 @@ USER_SERIALIZER_IMPLEMENTATION_HELPER(DuelMatchState)
 	io.template generic<GameLogicState> (value.logicState);
 
 	// the template keyword is needed here so the compiler knows generic is
-	// a template function and does not complain about <>.
-	io.template generic<PlayerInput> ( value.playerInput[LEFT_PLAYER] );
-	io.template generic<PlayerInput> ( value.playerInput[RIGHT_PLAYER] );
+	// a template function and does not complain about <>.	
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		io.template generic<PlayerInput> (value.playerInput[i]);
+	}
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -110,10 +112,10 @@ int DuelMatchState::getHitcount(PlayerSide player) const
 
 int DuelMatchState::getScore(PlayerSide player) const
 {
-	assert( player == LEFT_PLAYER || player == RIGHT_PLAYER );
-	if( player == LEFT_PLAYER )
+	assert( player == LEFT_SIDE || player == RIGHT_SIDE);
+	if( player == LEFT_SIDE )
 		return logicState.leftScore;
-	if( player == RIGHT_PLAYER )
+	if( player == RIGHT_SIDE )
 		return logicState.rightScore;
 	// unreachable
 	return -1;

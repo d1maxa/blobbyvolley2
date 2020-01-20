@@ -138,35 +138,41 @@ PlayerSide IGameLogic::getLastErrorSide()
 GameLogicState IGameLogic::getState() const
 {
 	GameLogicState gls;
-	gls.leftScore = getScore(LEFT_PLAYER);
-	gls.rightScore = getScore(RIGHT_PLAYER);
-	gls.hitCount[LEFT_PLAYER] = getTouches(LEFT_PLAYER);
-	gls.hitCount[RIGHT_PLAYER] = getTouches(RIGHT_PLAYER);
+	gls.leftScore = getScore(LEFT_SIDE);
+	gls.rightScore = getScore(RIGHT_SIDE);	
+	gls.hitCount[LEFT_SIDE] = getTouches(LEFT_SIDE);
+	gls.hitCount[RIGHT_SIDE] = getTouches(RIGHT_SIDE);
 	gls.servingPlayer = getServingPlayer();
-	gls.winningPlayer = getWinningPlayer();
-	gls.squish[LEFT_PLAYER] = mSquish[LEFT_PLAYER];
-	gls.squish[RIGHT_PLAYER] = mSquish[RIGHT_PLAYER];
+	gls.winningPlayer = getWinningPlayer();	
 	gls.squishWall = mSquishWall;
 	gls.squishGround = mSquishGround;
 	gls.isGameRunning = mIsGameRunning;
-	gls.isBallValid = mIsBallValid;
+	gls.isBallValid = mIsBallValid;	
+
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{		
+		gls.squish[i] = mSquish[i];
+	}
 
 	return gls;
 }
 
 void IGameLogic::setState(GameLogicState gls)
 {
-	setScore(LEFT_PLAYER, gls.leftScore);
-	setScore(RIGHT_PLAYER, gls.rightScore);
-	mTouches[LEFT_PLAYER] = gls.hitCount[LEFT_PLAYER];
-	mTouches[RIGHT_PLAYER] = gls.hitCount[RIGHT_PLAYER];
-	setServingPlayer(gls.servingPlayer);
-	mSquish[LEFT_PLAYER] = gls.squish[LEFT_PLAYER];
-	mSquish[RIGHT_PLAYER] = gls.squish[RIGHT_PLAYER];
+	setScore(LEFT_SIDE, gls.leftScore);
+	setScore(RIGHT_SIDE, gls.rightScore);
+	mTouches[LEFT_SIDE] = gls.hitCount[LEFT_SIDE];
+	mTouches[RIGHT_SIDE] = gls.hitCount[RIGHT_SIDE];
+	setServingPlayer(gls.servingPlayer);	
 	mSquishWall = gls.squishWall;
 	mSquishGround = gls.squishGround;
 	mIsGameRunning = gls.isGameRunning;
-	mIsBallValid = gls.isBallValid;
+	mIsBallValid = gls.isBallValid;	
+
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{		
+		mSquish[i] = gls.squish[i];
+	}
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -379,17 +385,17 @@ protected:
 
 		virtual PlayerSide checkWin() const
 		{
-			int left = getScore(LEFT_PLAYER);
-			int right = getScore(RIGHT_PLAYER);
+			int left = getScore(LEFT_SIDE);
+			int right = getScore(RIGHT_SIDE);
 			int stw = getScoreToWin();
 			if( left >= stw && left >= right + 2 )
 			{
-				return LEFT_PLAYER;
+				return LEFT_SIDE;
 			}
 
 			if( right >= stw && right >= left + 2 )
 			{
-				return RIGHT_PLAYER;
+				return RIGHT_SIDE;
 			}
 
 			return NO_PLAYER;

@@ -28,12 +28,16 @@ USER_SERIALIZER_IMPLEMENTATION_HELPER(GameLogicState)
 {
 	io.uint32(value.leftScore);
 	io.uint32(value.rightScore);
-	io.uint32(value.hitCount[LEFT_PLAYER]);
-	io.uint32(value.hitCount[RIGHT_PLAYER]);
+	io.uint32(value.hitCount[LEFT_SIDE]);
+	io.uint32(value.hitCount[RIGHT_SIDE]);	
 	io.template generic<PlayerSide>( value.servingPlayer );
 	io.template generic<PlayerSide>( value.winningPlayer );
-	io.uint32(value.squish[LEFT_PLAYER]);
-	io.uint32(value.squish[RIGHT_PLAYER]);
+
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		io.uint32(value.squish[i]);
+	}
+
 	io.uint32(value.squishWall);
 	io.uint32(value.squishGround);
 	io.boolean(value.isGameRunning);
@@ -43,24 +47,35 @@ USER_SERIALIZER_IMPLEMENTATION_HELPER(GameLogicState)
 void GameLogicState::swapSides()
 {
 	std::swap(leftScore, rightScore);
-	std::swap(squish[LEFT_PLAYER], squish[RIGHT_PLAYER]);
-	std::swap(hitCount[LEFT_PLAYER], hitCount[RIGHT_PLAYER]);
 
-	if(servingPlayer == LEFT_PLAYER)
+	for (int i = 0; i < MAX_PLAYERS; i+=2)
 	{
-		servingPlayer = RIGHT_PLAYER;
+		std::swap(squish[i], squish[i + 1]);		
 	}
-	 else if(servingPlayer == RIGHT_PLAYER)
+
+	std::swap(hitCount[LEFT_SIDE], hitCount[RIGHT_SIDE]);
+
+	if(servingPlayer == LEFT_SIDE)
 	{
-		servingPlayer = LEFT_PLAYER;
+		servingPlayer = RIGHT_SIDE;
+	}
+	else if(servingPlayer == RIGHT_SIDE)
+	{
+		servingPlayer = LEFT_SIDE;
 	}
 }
 
 std::ostream& operator<<(std::ostream& stream, const GameLogicState& state)
 {
 	stream << "GAME LOGIC STATE [ " << state.leftScore << " : " << state.rightScore << " "
-			<< state.hitCount[LEFT_PLAYER] << " " << state.hitCount[RIGHT_PLAYER] << "  " << state.servingPlayer
-			<< "  " << state.squish[LEFT_PLAYER] << " " << state.squish[RIGHT_PLAYER] << "  " << state.squishWall
-			<< "  " << state.squishGround << "  " << state.isGameRunning << "  " << state.isBallValid << "]";
+		<< state.hitCount[LEFT_SIDE] << " " << state.hitCount[RIGHT_SIDE] << "  " << state.servingPlayer
+		<< "  ";
+
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		stream << state.squish[i] << " ";
+	}
+	
+	stream << state.squishWall << "  " << state.squishGround << "  " << state.isGameRunning << "  " << state.isBallValid << "]";
 	return stream;
 }

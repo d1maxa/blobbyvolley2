@@ -32,9 +32,9 @@ struct GameLogicState
 	unsigned int rightScore;
 	unsigned int hitCount[NUM_SIDES];
 	PlayerSide servingPlayer;
-	PlayerSide winningPlayer = NO_PLAYER;
+	PlayerSide winningPlayer = NO_SIDE;
 
-	unsigned int squish[2];
+	unsigned int squish[MAX_PLAYERS];
 	unsigned int squishWall;
 	unsigned int squishGround;
 

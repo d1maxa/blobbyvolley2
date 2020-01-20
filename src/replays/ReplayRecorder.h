@@ -78,8 +78,9 @@ class ReplayRecorder : public ObjectCounter<ReplayRecorder>
 		void finalize(unsigned int left, unsigned int right);
 
 		// game setup setting
-		void setPlayerNames(const std::string& left, const std::string& right);
-		void setPlayerColors(Color left, Color right);
+		void setPlayersEnabled(bool playersEnabled[MAX_PLAYERS]);
+		void setPlayerNames(std::string playerNames[MAX_PLAYERS]);
+		void setPlayerColors(Color colors[MAX_PLAYERS]);
 		void setGameSpeed(int fps);
 		void setGameRules( std::string rules );
 
@@ -88,6 +89,7 @@ class ReplayRecorder : public ObjectCounter<ReplayRecorder>
 		std::vector<ReplaySavePoint> mSavePoints;
 
 		// general replay attributes
+		bool mPlayersEnabled[MAX_PLAYERS];
 		std::string mPlayerNames[MAX_PLAYERS];
 		Color mPlayerColors[MAX_PLAYERS];
 		unsigned int mEndScore[MAX_PLAYERS];

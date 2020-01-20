@@ -65,7 +65,8 @@ DuelMatch::DuelMatch(bool remote, std::string rules, bool playersEnabled[MAX_PLA
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
 		mPlayersEnabled[i] = playersEnabled[i];
-		setInputSource((PlayerSide)i, std::make_shared<InputSource>());
+		if(playersEnabled[i])
+			setInputSource((PlayerSide)i, std::make_shared<InputSource>());
 	}
 
 	if (!mRemote)

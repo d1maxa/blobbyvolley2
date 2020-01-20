@@ -70,7 +70,7 @@ protected:
 
 
 	/// calculates the default name for a replay file
-	void setDefaultReplayName(const std::string& left, const std::string& right);
+	void setDefaultReplayName(std::string playerNames[MAX_PLAYERS]);
 
 	/// saves the replay to the desired file
 	void saveReplay(ReplayRecorder& recorder);

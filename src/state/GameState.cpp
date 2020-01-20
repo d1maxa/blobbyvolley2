@@ -101,8 +101,14 @@ void GameState::presentGameUI()
 	imgui.doText(GEN_ID, Vector2(800-24, 24), textBuffer, TF_ALIGN_RIGHT);
 
 	// blob name / time textfields
-	imgui.doText(GEN_ID, Vector2(12, 550), mMatch->getPlayer(LEFT_PLAYER).getName());
-	imgui.doText(GEN_ID, Vector2(788, 550), mMatch->getPlayer(RIGHT_PLAYER).getName(), TF_ALIGN_RIGHT);
+	imgui.doText(GEN_ID, Vector2(12, 530), mMatch->getPlayer(LEFT_PLAYER).getName());
+	imgui.doText(GEN_ID, Vector2(422, 530), mMatch->getPlayer(RIGHT_PLAYER).getName());
+
+	if(mMatch -> getPlayerEnabled(LEFT_PLAYER_2))
+		imgui.doText(GEN_ID, Vector2(12, 560), mMatch->getPlayer(LEFT_PLAYER_2).getName());
+	if (mMatch->getPlayerEnabled(RIGHT_PLAYER_2))
+		imgui.doText(GEN_ID, Vector2(422, 560), mMatch->getPlayer(RIGHT_PLAYER_2).getName());
+
 	imgui.doText(GEN_ID, Vector2(400, 24), mMatch->getClock().getTimeString(), TF_ALIGN_CENTER);
 }
 
@@ -194,17 +200,24 @@ bool GameState::displayWinningPlayerScreen(PlayerSide winner)
 	return false;
 }
 
-void GameState::setDefaultReplayName(const std::string& left, const std::string& right)
+void GameState::setDefaultReplayName(std::string playerNames[MAX_PLAYERS])
 {
-	mFilename = left;
-	if(mFilename.size() > 7)
-		mFilename.resize(7);
-	mFilename += " vs ";
+	std::string left = playerNames[LEFT_PLAYER];	
+	std::string right = playerNames[RIGHT_PLAYER];	
+	for (int i = LEFT_PLAYER_2; i < MAX_PLAYERS; ++i)
+	{
+		if (playerNames[i].size())
+		{
+			if (i % 2)
+				right += " " + playerNames[i];
+			else
+				left += " " + playerNames[i];
+		}		
+	}
 
-	std::string opp = right;
-	if(right.size() > 7)
-		opp.resize(7);
-	mFilename += opp;
+	mFilename = left + " vs " + right;
+	//mFilename += " vs ";
+	//mFilename += right;	
 }
 
 void GameState::saveReplay(ReplayRecorder& recorder)

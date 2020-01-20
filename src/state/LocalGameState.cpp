@@ -47,32 +47,41 @@ LocalGameState::LocalGameState()
 	PlayerIdentity players[MAX_PLAYERS];
 	std::shared_ptr<InputSource> inputs[MAX_PLAYERS];
 	bool playersEnabled[MAX_PLAYERS];
+	std::string playerNames[MAX_PLAYERS];
+	Color playerColors[MAX_PLAYERS];
 
 	for(int i = 0; i < MAX_PLAYERS; i++)
-	{
-		players[i] = config->loadPlayerIdentity((PlayerSide)i, false);
+	{		
 		inputs[i] = InputSourceFactory::createInputSource(config, (PlayerSide)i);
 		playersEnabled[i] = inputs[i] != nullptr;
+
+		if (playersEnabled[i])
+		{
+			players[i] = config->loadPlayerIdentity((PlayerSide)i, false);
+			playerNames[i] = players[i].getName();
+			playerColors[i] = players[i].getStaticColor();
+		}
 	}
 
 	// create default replay name
-	setDefaultReplayName(players[LEFT_PLAYER].getName(), players[RIGHT_PLAYER].getName());
+	setDefaultReplayName(playerNames);
 
 	// set speed
 	SpeedController::getMainInstance()->setGameSpeed( (float)config->getInteger("gamefps") );
 	
 	SoundManager::getSingleton().playSound("sounds/pfiff.wav", ROUND_START_SOUND_VOLUME);
 
-	mMatch.reset(new DuelMatch( false, config->getString("rules"), playersEnabled));
-	
-	mMatch->setPlayers(players);	
+	mMatch.reset(new DuelMatch( false, config->getString("rules"), playersEnabled));	
+	mMatch->setPlayers(players);
+
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
 		mMatch->setInputSource((PlayerSide)i, inputs[i]);
 	}
 
-	mRecorder->setPlayerNames(players[LEFT_PLAYER].getName(), players[RIGHT_PLAYER].getName());
-	mRecorder->setPlayerColors(players[LEFT_PLAYER].getStaticColor(), players[RIGHT_PLAYER].getStaticColor() );
+	mRecorder->setPlayersEnabled(playersEnabled);
+	mRecorder->setPlayerNames(playerNames);
+	mRecorder->setPlayerColors(playerColors);
 	mRecorder->setGameSpeed((float)config->getInteger("gamefps"));
 	mRecorder->setGameRules( config->getString("rules") );
 }
@@ -140,11 +149,11 @@ void LocalGameState::step_impl()
 		mRecorder->record(mMatch->getState());
 		mMatch->step();
 
-		if (mMatch->winningPlayer() != NO_PLAYER)
+		if (mMatch->winningPlayer() != NO_SIDE)
 		{
 			mWinner = true;
 			mRecorder->record(mMatch->getState());
-			mRecorder->finalize( mMatch->getScore(LEFT_PLAYER), mMatch->getScore(RIGHT_PLAYER) );
+			mRecorder->finalize( mMatch->getScore(LEFT_SIDE), mMatch->getScore(RIGHT_SIDE) );
 		}
 
 		presentGame();

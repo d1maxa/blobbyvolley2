@@ -236,7 +236,10 @@ void NetworkGameState::step_impl()
 
 				mRemotePlayer->setName(charName);
 
-				setDefaultReplayName(mLocalPlayer->getName(), mRemotePlayer->getName());
+				std::string playerNames[MAX_PLAYERS];
+				playerNames[LEFT_PLAYER] = mLocalPlayer->getName();
+				playerNames[RIGHT_PLAYER] = mRemotePlayer->getName();
+				setDefaultReplayName(playerNames);
 
 				// check whether to use remote player color
 				if(mUseRemoteColor)

@@ -40,8 +40,7 @@ class LocalGameState : public GameState
 		virtual const char* getStateName() const;
 
 	private:
-		bool mWinner;
-
+		bool mWinner;		
 		boost::scoped_ptr<ReplayRecorder> mRecorder;
 };
 

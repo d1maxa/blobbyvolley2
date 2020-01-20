@@ -77,8 +77,16 @@ NetworkGame::NetworkGame(RakServer& server, std::shared_ptr<NetworkPlayer> leftP
 	mRightPlayer = rightPlayer->getID();
 	mSwitchedSide = switchedSide;
 
-	mRecorder->setPlayerNames(leftPlayer->getName(), rightPlayer->getName());
-	mRecorder->setPlayerColors(leftPlayer->getColor(), rightPlayer->getColor());
+	std::string playerNames[MAX_PLAYERS];
+	Color playerColors[MAX_PLAYERS];
+
+	playerNames[LEFT_PLAYER] = leftPlayer->getName();
+	playerNames[RIGHT_PLAYER] = rightPlayer->getName();
+	playerColors[LEFT_PLAYER] = leftPlayer->getColor();
+	playerColors[RIGHT_PLAYER] = rightPlayer->getColor();
+
+	mRecorder->setPlayerNames(playerNames);
+	mRecorder->setPlayerColors(playerColors);
 	mRecorder->setGameSpeed(mSpeedController.getGameSpeed());
 	mRecorder->setGameRules(rules);
 

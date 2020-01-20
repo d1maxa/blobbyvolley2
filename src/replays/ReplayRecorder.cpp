@@ -101,8 +101,8 @@ void ReplayRecorder::save( std::shared_ptr<FileWrite> file) const
 	writeAttribute(*file, "game_duration", mSaveData.size() / mGameSpeed);
 	writeAttribute(*file, "game_date", std::time(0));
 
-	writeAttribute(*file, "score_left", mEndScore[LEFT_PLAYER]);
-	writeAttribute(*file, "score_right", mEndScore[RIGHT_PLAYER]);
+	writeAttribute(*file, "score_left", mEndScore[LEFT_SIDE]);
+	writeAttribute(*file, "score_right", mEndScore[RIGHT_SIDE]);
 
 	writeAttribute(*file, "name_left", mPlayerNames[LEFT_PLAYER]);
 	writeAttribute(*file, "name_right", mPlayerNames[RIGHT_PLAYER]);
@@ -180,8 +180,8 @@ void ReplayRecorder::record(const DuelMatchState& state)
 	// save the state every REPLAY_SAVEPOINT_PERIOD frames
 	// or when something interesting occurs
 	if(mSaveData.size() % REPLAY_SAVEPOINT_PERIOD == 0 ||
-		mEndScore[LEFT_PLAYER] != state.logicState.leftScore ||
-		mEndScore[RIGHT_PLAYER] != state.logicState.rightScore)
+		mEndScore[LEFT_SIDE] != state.logicState.leftScore ||
+		mEndScore[RIGHT_SIDE] != state.logicState.rightScore)
 	{
 		ReplaySavePoint sp;
 		sp.state = state;
@@ -197,22 +197,32 @@ void ReplayRecorder::record(const DuelMatchState& state)
 	mSaveData.push_back(packet);
 
 	// update the score
-	mEndScore[LEFT_PLAYER] = state.logicState.leftScore;
-	mEndScore[RIGHT_PLAYER] = state.logicState.rightScore;
+	mEndScore[LEFT_SIDE] = state.logicState.leftScore;
+	mEndScore[RIGHT_SIDE] = state.logicState.rightScore;
 }
 
-
-
-void ReplayRecorder::setPlayerNames(const std::string& left, const std::string& right)
+void ReplayRecorder::setPlayersEnabled(bool playersEnabled[MAX_PLAYERS])
 {
-	mPlayerNames[LEFT_PLAYER] = left;
-	mPlayerNames[RIGHT_PLAYER] = right;
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		mPlayersEnabled[i] = playersEnabled[i];
+	}
 }
 
-void ReplayRecorder::setPlayerColors(Color left, Color right)
+void ReplayRecorder::setPlayerNames(std::string playerNames[MAX_PLAYERS])
 {
-	mPlayerColors[LEFT_PLAYER] = left;
-	mPlayerColors[RIGHT_PLAYER] = right;
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		mPlayerNames[i] = playerNames[i];
+	}	
+}
+
+void ReplayRecorder::setPlayerColors(Color colors[MAX_PLAYERS])
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		mPlayerColors[i] = colors[i];
+	}	
 }
 
 void ReplayRecorder::setGameSpeed(int fps)
@@ -230,8 +240,8 @@ void ReplayRecorder::setGameRules( std::string rules )
 
 void ReplayRecorder::finalize(unsigned int left, unsigned int right)
 {
-	mEndScore[LEFT_PLAYER] = left;
-	mEndScore[RIGHT_PLAYER] = right;
+	mEndScore[LEFT_SIDE] = left;
+	mEndScore[RIGHT_SIDE] = right;
 
 	// fill with one second of do nothing
 	for(int i = 0; i < 75; ++i)
