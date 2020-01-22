@@ -73,6 +73,12 @@ class IReplayLoader : public ObjectCounter<IReplayLoader>
 
 		/// gets the name of a player
 		virtual std::string getPlayerName(PlayerSide player) const = 0;
+		/// get player enabled
+		virtual bool getPlayerEnabled(PlayerSide player) const = 0;
+		/// get players count
+		virtual int getPlayerCount() const = 0;
+		/// get number of bytes storing one step
+		virtual int getBytesPerStep() const = 0;
 		/// gets blob color of a player
 		virtual Color getBlobColor(PlayerSide player) const = 0;
 		/// get final score of a player
@@ -95,7 +101,7 @@ class IReplayLoader : public ObjectCounter<IReplayLoader>
 		///				Has to be in range 0 ... getLength();
 		/// \param left[out] target where left player input is stored
 		/// \param right[out] target where right player input is stored
-		virtual void getInputAt(int step, InputSource* left, InputSource* right) = 0;
+		virtual void getInputAt(int step, InputSource* inputSource, bool first) = 0;
 
 
 		/// \brief checks wether the specified position is a savepoint

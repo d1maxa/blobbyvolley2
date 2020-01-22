@@ -34,9 +34,12 @@ void DuelMatchState::swapSides()
 	worldState.swapSides();
 	logicState.swapSides();
 
-	std::swap(playerInput[LEFT_PLAYER].left, playerInput[LEFT_PLAYER].right);
-	std::swap(playerInput[RIGHT_PLAYER].left, playerInput[RIGHT_PLAYER].right);
-	std::swap(playerInput[LEFT_PLAYER], playerInput[RIGHT_PLAYER]);
+	for (int i = 0; i < MAX_PLAYERS; i+=2)
+	{
+		std::swap(playerInput[i].left, playerInput[i].right);
+		std::swap(playerInput[i + 1].left, playerInput[i + 1].right);
+		std::swap(playerInput[i], playerInput[i + 1]);
+	}	
 }
 
 USER_SERIALIZER_IMPLEMENTATION_HELPER(DuelMatchState)

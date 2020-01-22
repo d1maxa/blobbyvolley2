@@ -89,6 +89,7 @@ class ReplayRecorder : public ObjectCounter<ReplayRecorder>
 		std::vector<ReplaySavePoint> mSavePoints;
 
 		// general replay attributes
+		int mBytesPerStep;		
 		bool mPlayersEnabled[MAX_PLAYERS];
 		std::string mPlayerNames[MAX_PLAYERS];
 		Color mPlayerColors[MAX_PLAYERS];

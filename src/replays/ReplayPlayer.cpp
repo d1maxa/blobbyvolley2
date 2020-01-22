@@ -45,11 +45,19 @@ void ReplayPlayer::load(const std::string& filename)
 {
 	loader.reset(IReplayLoader::createReplayLoader(filename));
 
-	mPlayerNames[LEFT_PLAYER] = loader->getPlayerName(LEFT_PLAYER);
-	mPlayerNames[RIGHT_PLAYER] = loader->getPlayerName(RIGHT_PLAYER);
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		mPlayerNames[i] = loader->getPlayerName(PlayerSide(i));
+		mPlayersEnabled[i] = loader->getPlayerEnabled(PlayerSide(i));
+	}	
 
 	mPosition = 0;
 	mLength = loader->getLength();
+}
+
+bool ReplayPlayer::getPlayerEnabled(const PlayerSide side) const
+{
+	return mPlayersEnabled[side];
 }
 
 std::string ReplayPlayer::getPlayerName(const PlayerSide side) const
@@ -65,6 +73,16 @@ Color ReplayPlayer::getBlobColor(const PlayerSide side) const
 int ReplayPlayer::getGameSpeed() const
 {
 	return loader->getSpeed();
+}
+
+int ReplayPlayer::getPlayersCount() const
+{
+	return loader->getPlayerCount();
+}
+
+int ReplayPlayer::getBytesPerStep() const
+{
+	return loader->getBytesPerStep();
 }
 
 float ReplayPlayer::getPlayProgress() const
@@ -88,25 +106,40 @@ std::string ReplayPlayer::getRules() const
 }
 
 bool ReplayPlayer::play(DuelMatch* virtual_match)
-{
-	mPosition++;
+{	
 	if( mPosition < mLength )
 	{
-
-		PlayerInput left;
-		PlayerInput right;
-		loader->getInputAt(mPosition, virtual_match->getInputSource( LEFT_PLAYER ).get(), virtual_match->getInputSource( RIGHT_PLAYER ).get() );
-		virtual_match->step();
-
 		int point;
-		if(loader->isSavePoint(mPosition, point))
+		if (loader->isSavePoint(mPosition, point))
 		{
 			ReplaySavePoint reference;
 			loader->readSavePoint(point, reference);
 			virtual_match->setState(reference.state);
 		}
 
+		auto first = true;
+		for (int i = 0; i < MAX_PLAYERS; ++i)
+		{
+			if (mPlayersEnabled[i])
+			{
+				loader->getInputAt(mPosition, virtual_match->getInputSource((PlayerSide)i).get(), first);
 
+				if (first)
+				{
+					first = false;
+				}
+				else
+				{
+					first = true;
+					mPosition++;
+				}				
+			}
+		}
+		if (!first)
+			mPosition++;
+		
+		virtual_match->step();		
+				
 		// everything was as expected
 		return true;
 	}

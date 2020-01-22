@@ -75,10 +75,7 @@ PhysicWorld::PhysicWorld(bool playersEnabled[MAX_PLAYERS], bool blobCollisions)
 			mCurrentBlobbyAnimationSpeed[i] = 0.0;
 			mBlobState[i] = 0.0;
 
-			if (i % 2)
-				mBlobPosition[i] = Vector2(600 + 80 * (i / 2), GROUND_PLANE_HEIGHT);
-			else
-				mBlobPosition[i] = Vector2(200 + 80 * (i / 2), GROUND_PLANE_HEIGHT);
+			mBlobPosition[i] = Vector2(200 + 400 * (i % 2) + 80 * (i / 2) * std::pow(-1, i / 2), GROUND_PLANE_HEIGHT);			
 		}
 	}
 }
@@ -597,9 +594,12 @@ PhysicState PhysicWorld::getState() const
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
-		st.blobPosition[i] = mBlobPosition[i];		
-		st.blobVelocity[i] = mBlobVelocity[i];		
-		st.blobState[i] = mBlobState[i];		
+		if (mPlayersEnabled[i])
+		{
+			st.blobPosition[i] = mBlobPosition[i];
+			st.blobVelocity[i] = mBlobVelocity[i];
+			st.blobState[i] = mBlobState[i];
+		}
 	}	
 
 	st.ballPosition = mBallPosition;
@@ -613,9 +613,12 @@ void PhysicWorld::setState(const PhysicState& ps)
 {
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
-		mBlobPosition[i] = ps.blobPosition[i];		
-		mBlobVelocity[i] = ps.blobVelocity[i];		
-		mBlobState[i] = ps.blobState[i];		
+		if (mPlayersEnabled[i])
+		{
+			mBlobPosition[i] = ps.blobPosition[i];
+			mBlobVelocity[i] = ps.blobVelocity[i];
+			mBlobState[i] = ps.blobState[i];
+		}
 	}
 
 	mBallPosition = ps.ballPosition;

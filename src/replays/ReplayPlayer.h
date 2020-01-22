@@ -50,10 +50,12 @@ class ReplayPlayer : public ObjectCounter<ReplayPlayer>
 		// -----------------------------------------------------------------------------------------
 		// 							Replay Attributes
 		// -----------------------------------------------------------------------------------------
-
+		bool getPlayerEnabled(const PlayerSide side) const;
 		std::string getPlayerName(const PlayerSide side) const;
 		Color getBlobColor(const PlayerSide side) const;
 		int getGameSpeed() const;
+		int getPlayersCount() const;
+		int getBytesPerStep() const;
 
 		// -----------------------------------------------------------------------------------------
 		// 							Status information
@@ -101,4 +103,5 @@ class ReplayPlayer : public ObjectCounter<ReplayPlayer>
 		boost::scoped_ptr<IReplayLoader> loader;
 
 		std::string mPlayerNames[MAX_PLAYERS];
+		bool mPlayersEnabled[MAX_PLAYERS];		
 };

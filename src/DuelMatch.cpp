@@ -315,8 +315,11 @@ void DuelMatch::setState(const DuelMatchState& state)
 	
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
-		mTransformedInput[i] = state.playerInput[i];
-		mInputSources[i]->setInput(mTransformedInput[i]);		
+		if (mPlayersEnabled[i])
+		{
+			mTransformedInput[i] = state.playerInput[i];
+			mInputSources[i]->setInput(mTransformedInput[i]);
+		}
 	}	
 }
 
@@ -333,7 +336,8 @@ DuelMatchState DuelMatch::getState() const
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
-		state.playerInput[i] = mTransformedInput[i];
+		if(mPlayersEnabled[i])
+			state.playerInput[i] = mTransformedInput[i];
 	}
 
 	return state;

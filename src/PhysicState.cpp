@@ -27,20 +27,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 USER_SERIALIZER_IMPLEMENTATION_HELPER(PhysicState)
 {
-	io.number( value.blobPosition[LEFT_PLAYER].x );
-	io.number( value.blobPosition[LEFT_PLAYER].y );
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		io.number(value.blobPosition[i].x);
+		io.number(value.blobPosition[i].y);
 
-	io.number( value.blobVelocity[LEFT_PLAYER].x );
-	io.number( value.blobVelocity[LEFT_PLAYER].y );
+		io.number(value.blobVelocity[i].x);
+		io.number(value.blobVelocity[i].y);
 
-	io.number( value.blobPosition[RIGHT_PLAYER].x );
-	io.number( value.blobPosition[RIGHT_PLAYER].y );
-
-	io.number( value.blobVelocity[RIGHT_PLAYER].x );
-	io.number( value.blobVelocity[RIGHT_PLAYER].y );
-
-	io.number( value.blobState[LEFT_PLAYER] );
-	io.number( value.blobState[RIGHT_PLAYER] );
+		io.number(value.blobState[i]);		
+	}	
 
 	io.number( value.ballPosition.x );
 	io.number( value.ballPosition.y );
@@ -54,13 +50,17 @@ USER_SERIALIZER_IMPLEMENTATION_HELPER(PhysicState)
 
 void PhysicState::swapSides()
 {
-	blobPosition[LEFT_PLAYER].x = RIGHT_PLANE - blobPosition[LEFT_PLAYER].x;
-	blobPosition[RIGHT_PLAYER].x = RIGHT_PLANE - blobPosition[RIGHT_PLAYER].x;
-	blobVelocity[LEFT_PLAYER].x = -blobVelocity[LEFT_PLAYER].x;
-	blobVelocity[RIGHT_PLAYER].x = -blobVelocity[RIGHT_PLAYER].x;
-	std::swap(blobPosition[LEFT_PLAYER], blobPosition[RIGHT_PLAYER]);
-	std::swap(blobVelocity[LEFT_PLAYER], blobVelocity[RIGHT_PLAYER]);
-	std::swap(blobState[LEFT_PLAYER], blobState[RIGHT_PLAYER]);
+	for (int i = 0; i < MAX_PLAYERS; i+=2)
+	{
+		blobPosition[i].x = RIGHT_PLANE - blobPosition[i].x;
+		blobPosition[i + 1].x = RIGHT_PLANE - blobPosition[i + 1].x;
+		blobVelocity[i].x = -blobVelocity[i].x;
+		blobVelocity[i + 1].x = -blobVelocity[i + 1].x;
+
+		std::swap(blobPosition[i], blobPosition[i + 1]);
+		std::swap(blobVelocity[i], blobVelocity[i + 1]);
+		std::swap(blobState[i], blobState[i + 1]);
+	}
 
 	ballPosition.x = RIGHT_PLANE - ballPosition.x;
 	ballVelocity.x = -ballVelocity.x;

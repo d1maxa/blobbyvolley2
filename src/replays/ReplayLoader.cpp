@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GenericIO.h"
 #include "base64.h"
 #include "ReplayDefs.h"
+#include "UserConfig.h"
 
 /* implementation */
 IReplayLoader* IReplayLoader::createReplayLoader(const std::string& filename)
@@ -74,30 +75,38 @@ class ReplayLoader_V2X: public IReplayLoader
 
 		virtual std::string getPlayerName(PlayerSide player) const override
 		{
-			if(player == LEFT_PLAYER)
-				return mLeftPlayerName;
-			if(player == RIGHT_PLAYER)
-				return mRightPlayerName;
+			assert(player >= LEFT_PLAYER && player < MAX_PLAYERS);
+			return mPlayerNames[player];			
+		}
 
-			assert(0);
+		virtual bool getPlayerEnabled(PlayerSide player) const override
+		{
+			assert(player >= LEFT_PLAYER && player < MAX_PLAYERS);
+			return mPlayersEnabled[player];
+		}
+
+		virtual int getPlayerCount() const override
+		{
+			return mPlayersCount;
+		}
+
+		virtual int getBytesPerStep() const override
+		{
+			return mBytesPerStep;
 		}
 
 		virtual Color getBlobColor(PlayerSide player) const override
 		{
-			if(player == LEFT_PLAYER)
-				return mLeftColor;
-			if(player == RIGHT_PLAYER)
-				return mRightColor;
-
-			assert(0);
+			assert(player >= LEFT_PLAYER && player < MAX_PLAYERS);
+			return mPlayerColors[player];			
 		}
 
 
 		virtual int getFinalScore(PlayerSide player) const override
 		{
-			if(player == LEFT_PLAYER)
+			if(player == LEFT_SIDE)
 				return mLeftFinalScore;
-			if(player == RIGHT_PLAYER)
+			if(player == RIGHT_SIDE)
 				return mRightFinalScore;
 
 			assert(0);
@@ -129,7 +138,7 @@ class ReplayLoader_V2X: public IReplayLoader
 		}
 
 
-		virtual void getInputAt(int step, InputSource* left, InputSource* right) override
+		virtual void getInputAt(int step, InputSource* inputSource, bool first) override
 		{
 			assert( step  < mGameLength );
 
@@ -141,8 +150,10 @@ class ReplayLoader_V2X: public IReplayLoader
 			char packet = mBuffer[mReplayOffset + step];
 
 			// now read the packet data
-			left->setInput(PlayerInput((bool)(packet & 32), (bool)(packet & 16), (bool)(packet & 8)));
-			right->setInput(PlayerInput((bool)(packet & 4), (bool)(packet & 2), (bool)(packet & 1)));
+			if (first)
+				inputSource->setInput(PlayerInput((bool)(packet & 32), (bool)(packet & 16), (bool)(packet & 8)));
+			else
+				inputSource->setInput(PlayerInput((bool)(packet & 4), (bool)(packet & 2), (bool)(packet & 1)));
 		}
 
 		virtual bool isSavePoint(int position, int& save_position) const override
@@ -160,7 +171,7 @@ class ReplayLoader_V2X: public IReplayLoader
 		{
 			// desired index can't be lower that this value,
 			// cause additional savepoints could shift it only right
-			int index = targetPosition / REPLAY_SAVEPOINT_PERIOD;
+			int index = targetPosition / (REPLAY_SAVEPOINT_PERIOD * mBytesPerStep);
 
 			if(index >= static_cast<int>(mSavePoints.size()))
 				return -1;
@@ -252,15 +263,34 @@ class ReplayLoader_V2X: public IReplayLoader
 					mLeftFinalScore = std::stoi(value);
 				else if( name == "score_right" )
 					mRightFinalScore = std::stoi(value);
-				else if( name == "name_left" )
-					mLeftPlayerName = value;
-				else if( name == "name_right" )
-					mRightPlayerName = value;
-				else if( name == "color_left" )
-					mLeftColor = Color(std::stoi(value));
-				else if( name == "color_right" )
-					mRightColor = Color(std::stoi(value));
+				else
+				{
+					for (int i = 0; i < MAX_PLAYERS; ++i)
+					{
+						auto prefix = UserConfig::getPlayerPrefix(PlayerSide(i));
+
+						if (name == "name_" + prefix)
+						{
+							mPlayerNames[i] = value;
+							break;
+						}
+						if(name == "color_" + prefix)
+						{
+							mPlayerColors[i] = Color(std::stoi(value));
+							break;
+						}						
+					}
+				}				
 			}
+
+			mPlayersCount = 0;
+			for (int i = 0; i < MAX_PLAYERS; ++i)
+			{
+				mPlayersEnabled[i] = mPlayerNames[i].size() > 0;
+				if(mPlayersEnabled[i])
+					mPlayersCount++;
+			}
+			mBytesPerStep = (mPlayersCount + 1) / 2;
 
 			// load rules
 			varElem = userConfigElem->FirstChildElement("rules");
@@ -303,16 +333,18 @@ class ReplayLoader_V2X: public IReplayLoader
 		std::vector<ReplaySavePoint> mSavePoints;
 
 		// specific data
-		std::string mLeftPlayerName;
-		std::string mRightPlayerName;
+		std::string mPlayerNames[MAX_PLAYERS];		
 		unsigned int mLeftFinalScore;
 		unsigned int mRightFinalScore;
 		unsigned int mGameSpeed;
 		unsigned int mGameDate;
 		unsigned int mGameLength;
-		unsigned int mGameDuration;
-		Color mLeftColor;
-		Color mRightColor;
+		unsigned int mGameDuration;		
+		Color mPlayerColors[MAX_PLAYERS];		
+
+		bool mPlayersEnabled[MAX_PLAYERS];
+		unsigned int mPlayersCount;
+		unsigned int mBytesPerStep;		
 
 		std::string mRules;
 

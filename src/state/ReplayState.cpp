@@ -65,18 +65,27 @@ void ReplayState::loadReplay(const std::string& file)
 		FileWrite rulesFile("rules/"+TEMP_RULES_NAME);
 		rulesFile.write(mReplayPlayer->getRules());
 		rulesFile.close();
-		mMatch.reset(new DuelMatch(false, TEMP_RULES_NAME));
 
-		SoundManager::getSingleton().playSound(	"sounds/pfiff.wav", ROUND_START_SOUND_VOLUME);
+		bool playersEnabled[MAX_PLAYERS];
+		PlayerIdentity players[MAX_PLAYERS];
+		for (int i = 0; i < MAX_PLAYERS; ++i)
+		{
+			playersEnabled[i] = mReplayPlayer->getPlayerEnabled(PlayerSide(i));
+			if (playersEnabled[i])
+			{
+				players[i] = PlayerIdentity(mReplayPlayer->getPlayerName(PlayerSide(i)));
+				players[i].setStaticColor(mReplayPlayer->getBlobColor(PlayerSide(i)));
+			}
+		}
 
-		mMatch->setPlayers(mReplayPlayer->getPlayerName(LEFT_PLAYER), mReplayPlayer->getPlayerName(RIGHT_PLAYER));
+		mMatch.reset(new DuelMatch(false, TEMP_RULES_NAME, playersEnabled));
 
-		mMatch->getPlayer(LEFT_PLAYER).setStaticColor(mReplayPlayer->getBlobColor(LEFT_PLAYER));
-		mMatch->getPlayer(RIGHT_PLAYER).setStaticColor(mReplayPlayer->getBlobColor(RIGHT_PLAYER));
+		SoundManager::getSingleton().playSound("sounds/pfiff.wav", ROUND_START_SOUND_VOLUME);
+			   
+		mMatch->setPlayers(players);		
 
 		SpeedController::getMainInstance()->setGameSpeed(
-				(float)IUserConfigReader::createUserConfigReader("config.xml")->getInteger("gamefps")
-			);
+				(float)IUserConfigReader::createUserConfigReader("config.xml")->getInteger("gamefps"));
 
 	//}
 	/*
@@ -114,7 +123,7 @@ void ReplayState::step_impl()
 		if(mReplayPlayer->gotoPlayingPosition(mPositionJump, mMatch.get()))
 			mPositionJump = -1;
 	}
-	 else if(!mPaused)
+	else if(!mPaused)
 	{
 		while( mSpeedTimer >= 8)
 		{
@@ -126,7 +135,7 @@ void ReplayState::step_impl()
 
 	}
 
-	mMatch->getClock().setTime( mReplayPlayer->getReplayPosition() / mReplayPlayer->getGameSpeed() );
+	mMatch->getClock().setTime( mReplayPlayer->getReplayPosition() / (mReplayPlayer->getGameSpeed() * mReplayPlayer->getBytesPerStep()));
 
 	// draw the progress bar
 	Vector2 prog_pos = Vector2(50, 600-22);
@@ -136,14 +145,14 @@ void ReplayState::step_impl()
 	PlayerSide side = NO_PLAYER;
 	if (mReplayPlayer->endOfFile())
 	{
-		int diff = mMatch->getScore(LEFT_PLAYER) - mMatch->getScore(RIGHT_PLAYER);
+		int diff = mMatch->getScore(LEFT_SIDE) - mMatch->getScore(RIGHT_SIDE);
 		if (diff > 0)
 		{
-			side = LEFT_PLAYER;
+			side = LEFT_SIDE;
 		}
 		else if (diff < 0)
 		{
-			side = RIGHT_PLAYER;
+			side = RIGHT_SIDE;
 		}
 	}
 

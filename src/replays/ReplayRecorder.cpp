@@ -43,6 +43,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "FileRead.h"
 #include "FileWrite.h"
 #include "base64.h"
+#include "UserConfig.h"
 
 /* implementation */
 VersionMismatchException::VersionMismatchException(const std::string& filename, uint8_t major, uint8_t minor)
@@ -98,19 +99,24 @@ void ReplayRecorder::save( std::shared_ptr<FileWrite> file) const
 
 	writeAttribute(*file, "game_speed", mGameSpeed);
 	writeAttribute(*file, "game_length", mSaveData.size());
-	writeAttribute(*file, "game_duration", mSaveData.size() / mGameSpeed);
+	writeAttribute(*file, "game_duration", mSaveData.size() / (mGameSpeed * mBytesPerStep));
 	writeAttribute(*file, "game_date", std::time(0));
 
 	writeAttribute(*file, "score_left", mEndScore[LEFT_SIDE]);
 	writeAttribute(*file, "score_right", mEndScore[RIGHT_SIDE]);
 
-	writeAttribute(*file, "name_left", mPlayerNames[LEFT_PLAYER]);
-	writeAttribute(*file, "name_right", mPlayerNames[RIGHT_PLAYER]);
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if(mPlayersEnabled[i])
+		{
+			auto prefix = UserConfig::getPlayerPrefix(PlayerSide(i));
 
-	/// \todo would be nice if we could write the actual colors instead of integers
-	writeAttribute(*file, "color_left", mPlayerColors[LEFT_PLAYER].toInt());
-	writeAttribute(*file, "color_right", mPlayerColors[RIGHT_PLAYER].toInt());
-
+			writeAttribute(*file, ("name_" + prefix).c_str(), mPlayerNames[i]);
+			/// \todo would be nice if we could write the actual colors instead of integers
+			writeAttribute(*file, ("color_" + prefix).c_str(), mPlayerColors[i].toInt());
+		}
+	}		
+	
 	// write the game rules
 	file->write("\t<rules>\n");
 	std::string coded;
@@ -141,15 +147,18 @@ void ReplayRecorder::save( std::shared_ptr<FileWrite> file) const
 }
 void ReplayRecorder::send(std::shared_ptr<GenericOut> target) const
 {
-	target->string(mPlayerNames[LEFT_PLAYER]);
-	target->string(mPlayerNames[RIGHT_PLAYER]);
-
-	target->generic<Color> (mPlayerColors[LEFT_PLAYER]);
-	target->generic<Color> (mPlayerColors[RIGHT_PLAYER]);
-
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if(mPlayersEnabled[i])
+		{
+			target->string(mPlayerNames[i]);
+			target->generic<Color> (mPlayerColors[i]);
+		}
+	}
+	
 	target->uint32( mGameSpeed );
-	target->uint32( mEndScore[LEFT_PLAYER] );
-	target->uint32( mEndScore[RIGHT_PLAYER] );
+	target->uint32( mEndScore[LEFT_SIDE] );
+	target->uint32( mEndScore[RIGHT_SIDE] );
 
 	target->string(mGameRules);
 
@@ -159,15 +168,18 @@ void ReplayRecorder::send(std::shared_ptr<GenericOut> target) const
 
 void ReplayRecorder::receive(std::shared_ptr<GenericIn> source)
 {
-	source->string(mPlayerNames[LEFT_PLAYER]);
-	source->string(mPlayerNames[RIGHT_PLAYER]);
-
-	source->generic<Color> (mPlayerColors[LEFT_PLAYER]);
-	source->generic<Color> (mPlayerColors[RIGHT_PLAYER]);
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if (mPlayersEnabled[i])
+		{
+			source->string(mPlayerNames[i]);
+			source->generic<Color> (mPlayerColors[i]);			
+		}
+	}	
 
 	source->uint32( mGameSpeed );
-	source->uint32( mEndScore[LEFT_PLAYER] );
-	source->uint32( mEndScore[RIGHT_PLAYER] );
+	source->uint32( mEndScore[LEFT_SIDE] );
+	source->uint32( mEndScore[RIGHT_SIDE] );
 
 	source->string(mGameRules);
 
@@ -179,7 +191,7 @@ void ReplayRecorder::record(const DuelMatchState& state)
 {
 	// save the state every REPLAY_SAVEPOINT_PERIOD frames
 	// or when something interesting occurs
-	if(mSaveData.size() % REPLAY_SAVEPOINT_PERIOD == 0 ||
+	if(mSaveData.size() % (REPLAY_SAVEPOINT_PERIOD * mBytesPerStep) == 0 ||
 		mEndScore[LEFT_SIDE] != state.logicState.leftScore ||
 		mEndScore[RIGHT_SIDE] != state.logicState.rightScore)
 	{
@@ -188,13 +200,35 @@ void ReplayRecorder::record(const DuelMatchState& state)
 		sp.step = mSaveData.size();
 		mSavePoints.push_back(sp);
 	}
-
+		
 	// we save this 1 here just for compatibility
 	// set highest bit to 1
 	unsigned char packet = 1 << 7;
-	packet |= (state.playerInput[LEFT_PLAYER].getAll() & 7) << 3;
-	packet |= (state.playerInput[RIGHT_PLAYER].getAll() & 7) ;
-	mSaveData.push_back(packet);
+	auto newPacket = true;
+
+	for (int i = 0; i < MAX_PLAYERS; i++)
+	{
+		if (mPlayersEnabled[i])
+		{
+			if (newPacket)
+			{			
+				packet = 1 << 7;
+				packet |= (state.playerInput[i].getAll() & 7) << 3;
+				newPacket = false;
+			}
+			else
+			{
+				packet |= (state.playerInput[i].getAll() & 7);
+				mSaveData.push_back(packet);			
+				newPacket = true;
+			}		
+		}
+	}
+
+	if(!newPacket)
+	{
+		mSaveData.push_back(packet);
+	}
 
 	// update the score
 	mEndScore[LEFT_SIDE] = state.logicState.leftScore;
@@ -203,10 +237,14 @@ void ReplayRecorder::record(const DuelMatchState& state)
 
 void ReplayRecorder::setPlayersEnabled(bool playersEnabled[MAX_PLAYERS])
 {
+	auto playersCount = 0;
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
 		mPlayersEnabled[i] = playersEnabled[i];
+		if (playersEnabled[i])
+			playersCount++;
 	}
+	mBytesPerStep = (playersCount + 1) / 2;
 }
 
 void ReplayRecorder::setPlayerNames(std::string playerNames[MAX_PLAYERS])
@@ -244,7 +282,7 @@ void ReplayRecorder::finalize(unsigned int left, unsigned int right)
 	mEndScore[RIGHT_SIDE] = right;
 
 	// fill with one second of do nothing
-	for(int i = 0; i < 75; ++i)
+	for(int i = 0; i < 75 * mBytesPerStep; ++i)
 	{
 		unsigned char packet = 0;
 		mSaveData.push_back(packet);

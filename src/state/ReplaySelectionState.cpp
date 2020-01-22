@@ -168,7 +168,7 @@ void ReplaySelectionState::step_impl()
 		imgui.doText(GEN_ID, Vector2(RIGHT - 20 - 24*dur.size(), 335), dur);
 
 		std::string res;
-		res = std::to_string(mReplayLoader->getFinalScore(LEFT_PLAYER)) + " : " +  std::to_string(mReplayLoader->getFinalScore(RIGHT_PLAYER));
+		res = std::to_string(mReplayLoader->getFinalScore(LEFT_SIDE)) + " : " +  std::to_string(mReplayLoader->getFinalScore(RIGHT_SIDE));
 
 		imgui.doText(GEN_ID, Vector2(MARGIN+20, 370), TextManager::RP_RESULT);
 		imgui.doText(GEN_ID, Vector2(RIGHT - 20 - 24*res.size(), 370), res);
