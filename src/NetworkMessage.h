@@ -91,7 +91,7 @@ enum MessageType
 // 	Structure:
 // 		ID_GAME_READY
 //		gamespeed (int)
-// 		opponent name (char[16])
+// 		opponent name (char[MAX_NAME_SIZE])
 //		opponent color (int)
 //
 // ID_ENTER_SERVER
@@ -103,7 +103,7 @@ enum MessageType
 // 	Structure:
 // 		ID_ENTER_SERVER
 // 		side (PlayerSide)
-// 		name (char[16])
+// 		name (char[MAX_NAME_SIZE])
 //		color (int)
 //
 // ID_PAUSE
@@ -192,7 +192,8 @@ enum class LobbyPacketType : unsigned char
 	JOIN_GAME,
 	LEAVE_GAME,
 	GAME_STATUS,
-	START_GAME
+	START_GAME,
+	CHANGE_TEAM
 };
 
 class IUserConfigReader;

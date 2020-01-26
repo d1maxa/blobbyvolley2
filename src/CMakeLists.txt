@@ -138,17 +138,16 @@ endif (NOT CMAKE_SYSTEM_NAME STREQUAL Windows)
 add_executable(blobby ${blobby_SRC})
 target_link_libraries(blobby lua raknet blobnet tinyxml ${RAKNET_LIBRARIES} ${PHYSFS_LIBRARY} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES} ${ADDITIONAL_LIBRARIES})
 
-if (UNIX)
-	add_executable(blobby-server ${blobby-server_SRC})
-	target_link_libraries(blobby-server lua raknet blobnet tinyxml ${RAKNET_LIBRARIES} ${PHYSFS_LIBRARY} ${SDL2_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-endif (UNIX)
+add_executable(blobby-server ${blobby-server_SRC})
+target_link_libraries(blobby-server lua raknet blobnet tinyxml ${RAKNET_LIBRARIES} ${PHYSFS_LIBRARY} ${SDL2_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 if (CMAKE_SYSTEM_NAME STREQUAL Windows)
 	set_target_properties(blobby PROPERTIES LINK_FLAGS "-mwindows") # disable the console window
+	set_target_properties(blobby-server PROPERTIES LINK_FLAGS "-mconsole") # enable the console window
 endif (CMAKE_SYSTEM_NAME STREQUAL Windows)
 
 if (WIN32)
-	install(TARGETS blobby DESTINATION .)
+	install(TARGETS blobby blobby-server DESTINATION .)
 elseif (UNIX)
 	install(TARGETS blobby blobby-server DESTINATION bin)
 endif (WIN32)

@@ -14,8 +14,16 @@
 int lua_print(lua_State* state);
 
 IScriptableComponent::IScriptableComponent() :
-	mState(luaL_newstate())
+	mState(luaL_newstate())	
 {
+	bool playerEnabled[MAX_PLAYERS];
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		playerEnabled[i] = true;
+	}
+
+	mDummyWorld = PhysicWorld(playerEnabled);
+
 	// register this in the lua registry
 	lua_pushliteral(mState, "__C++_ScriptComponent__");
 	lua_pushlightuserdata(mState, (void*)this);
@@ -244,13 +252,13 @@ int get_touches( lua_State* state )
 	return 1;
 }
 
-int get_players_count(lua_State* state)
+int get_players_count_in_team(lua_State* state)
 {
 	auto s = getMatch(state);
 	PlayerSide side = (PlayerSide)lua_toint(state, -1);
 	lua_pop(state, 1);
 	assert(side >= LEFT_PLAYER && side < MAX_PLAYERS);
-	lua_pushinteger(state, s->getPlayersCount(side));
+	lua_pushinteger(state, s->getPlayersCountInTeam(side));
 	return 1;
 }
 
@@ -294,7 +302,8 @@ int simulate_steps( lua_State* state )
 	for(int i = 0; i < steps; ++i)
 	{
 		// set ball valid to false to ignore blobby bounces
-		world->step(PlayerInput(), PlayerInput(), false, true);
+		PlayerInput inputs[MAX_PLAYERS];
+		world->step(inputs, false, true);
 	}
 
 	int ret = lua_pushvector(state, world->getBallPosition(), VectorType::POSITION);
@@ -333,8 +342,9 @@ int simulate_until(lua_State* state)
 	while(coordinate != ival && steps < 75 * 5)
 	{
 		steps++;
-		// set ball valid to false to ignore blobby bounces
-		world->step(PlayerInput(), PlayerInput(), false, true);
+		// set ball valid to false to ignore blobby bounces		
+		PlayerInput inputs[MAX_PLAYERS];
+		world->step(inputs, false, true);
 		// check for the condition
 		auto pos = world->getBallPosition();
 		float v = axis == "x" ? pos.x : 600 - pos.y;
@@ -379,7 +389,7 @@ void IScriptableComponent::setGameFunctions()
 	lua_register(mState, "get_blob_vel", get_blob_vel);
 	lua_register(mState, "get_score", get_score);
 	lua_register(mState, "get_touches", get_touches);
-	lua_register(mState, "get_players_count", get_players_count);
+	lua_register(mState, "get_players_count_in_team", get_players_count_in_team);
 	lua_register(mState, "is_ball_valid", get_ball_valid);
 	lua_register(mState, "is_game_running", get_game_running);
 	lua_register(mState, "get_serving_player", get_serving_player);

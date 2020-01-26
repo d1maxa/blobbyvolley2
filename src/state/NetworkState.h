@@ -46,7 +46,7 @@ class NetworkGameState : public GameState
 public:
 	/// create a NetworkGameState with connection to a certain server
 	/// \param client A client which has an established connection to the server we want to start the game on.
-	NetworkGameState(std::shared_ptr<RakClient> client, int rule_checksum, int score_to_win);
+	NetworkGameState(std::shared_ptr<RakClient> client, bool playerEnabled[MAX_PLAYERS], PlayerSide player, int rule_checksum, int score_to_win);
 
 	virtual ~NetworkGameState();
 	virtual void step_impl();
@@ -63,10 +63,8 @@ private:
 		PLAYER_WON,
 		PAUSING
 	} mNetworkState;
-
-	// these are pointers to mLeftPlayer or mRightPlayer respectively, so we don't need a smart pointer here
-	PlayerIdentity* mLocalPlayer;
-	PlayerIdentity* mRemotePlayer;
+		
+	PlayerIdentity mPlayers[MAX_PLAYERS];
 
 	bool mUseRemoteColor;
 
@@ -76,12 +74,15 @@ private:
 
 	std::shared_ptr<RakClient> mClient;
 	PlayerSide mOwnSide;
+	PlayerSide mPlayerIndex;
 	PlayerSide mWinningPlayer;
-
+	
 	// Chat Vars
 	std::vector<std::string> mChatlog;
 	std::vector<bool > mChatOrigin;
 	unsigned mSelectedChatmessage;
 	unsigned mChatCursorPosition;
 	std::string mChattext;
+
+	void appendChat(std::string message, bool local);
 };

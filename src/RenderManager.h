@@ -210,7 +210,7 @@ class RenderManager : public ObjectCounter<RenderManager>
 		float mMouseMarkerPosition;
 		bool mNeedRedraw;
 
-		bool mPlayersEnabled[MAX_PLAYERS];
+		bool mPlayerEnabled[MAX_PLAYERS];
 
 	private:
 		static RenderManager *mSingleton;

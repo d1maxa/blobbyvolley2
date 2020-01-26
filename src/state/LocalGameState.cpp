@@ -46,16 +46,16 @@ LocalGameState::LocalGameState()
 
 	PlayerIdentity players[MAX_PLAYERS];
 	std::shared_ptr<InputSource> inputs[MAX_PLAYERS];
-	bool playersEnabled[MAX_PLAYERS];
+	bool playerEnabled[MAX_PLAYERS];
 	std::string playerNames[MAX_PLAYERS];
 	Color playerColors[MAX_PLAYERS];
 
 	for(int i = 0; i < MAX_PLAYERS; i++)
 	{		
 		inputs[i] = InputSourceFactory::createInputSource(config, (PlayerSide)i);
-		playersEnabled[i] = inputs[i] != nullptr;
+		playerEnabled[i] = inputs[i] != nullptr;
 
-		if (playersEnabled[i])
+		if (playerEnabled[i])
 		{
 			players[i] = config->loadPlayerIdentity((PlayerSide)i, false);
 			playerNames[i] = players[i].getName();
@@ -71,7 +71,7 @@ LocalGameState::LocalGameState()
 	
 	SoundManager::getSingleton().playSound("sounds/pfiff.wav", ROUND_START_SOUND_VOLUME);
 
-	mMatch.reset(new DuelMatch( false, config->getString("rules"), playersEnabled));	
+	mMatch.reset(new DuelMatch( false, config->getString("rules"), playerEnabled));	
 	mMatch->setPlayers(players);
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
@@ -79,7 +79,7 @@ LocalGameState::LocalGameState()
 		mMatch->setInputSource((PlayerSide)i, inputs[i]);
 	}
 
-	mRecorder->setPlayersEnabled(playersEnabled);
+	mRecorder->setPlayerEnabled(playerEnabled);
 	mRecorder->setPlayerNames(playerNames);
 	mRecorder->setPlayerColors(playerColors);
 	mRecorder->setGameSpeed((float)config->getInteger("gamefps"));

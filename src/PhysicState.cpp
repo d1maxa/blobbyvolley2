@@ -35,7 +35,8 @@ USER_SERIALIZER_IMPLEMENTATION_HELPER(PhysicState)
 		io.number(value.blobVelocity[i].x);
 		io.number(value.blobVelocity[i].y);
 
-		io.number(value.blobState[i]);		
+		io.number(value.blobState[i]);
+		io.boolean(value.playerEnabled[i]);
 	}	
 
 	io.number( value.ballPosition.x );
@@ -60,6 +61,7 @@ void PhysicState::swapSides()
 		std::swap(blobPosition[i], blobPosition[i + 1]);
 		std::swap(blobVelocity[i], blobVelocity[i + 1]);
 		std::swap(blobState[i], blobState[i + 1]);
+		std::swap(playerEnabled[i], playerEnabled[i + 1]);
 	}
 
 	ballPosition.x = RIGHT_PLANE - ballPosition.x;

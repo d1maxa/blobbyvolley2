@@ -66,19 +66,19 @@ void ReplayState::loadReplay(const std::string& file)
 		rulesFile.write(mReplayPlayer->getRules());
 		rulesFile.close();
 
-		bool playersEnabled[MAX_PLAYERS];
+		bool playerEnabled[MAX_PLAYERS];
 		PlayerIdentity players[MAX_PLAYERS];
 		for (int i = 0; i < MAX_PLAYERS; ++i)
 		{
-			playersEnabled[i] = mReplayPlayer->getPlayerEnabled(PlayerSide(i));
-			if (playersEnabled[i])
+			playerEnabled[i] = mReplayPlayer->getPlayerEnabled(PlayerSide(i));
+			if (playerEnabled[i])
 			{
 				players[i] = PlayerIdentity(mReplayPlayer->getPlayerName(PlayerSide(i)));
 				players[i].setStaticColor(mReplayPlayer->getBlobColor(PlayerSide(i)));
 			}
 		}
 
-		mMatch.reset(new DuelMatch(false, TEMP_RULES_NAME, playersEnabled));
+		mMatch.reset(new DuelMatch(false, TEMP_RULES_NAME, playerEnabled));
 
 		SoundManager::getSingleton().playSound("sounds/pfiff.wav", ROUND_START_SOUND_VOLUME);
 			   

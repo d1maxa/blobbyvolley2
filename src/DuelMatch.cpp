@@ -33,39 +33,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "IUserConfigReader.h"
 
 /* implementation */
-
-DuelMatch::DuelMatch(bool remote, std::string rules, int score_to_win) :
-		// we send a pointer to an unconstructed object here!
-		mLogic(createGameLogic(rules, this, score_to_win == 0 ? IUserConfigReader::createUserConfigReader("config.xml")->getInteger("scoretowin") : score_to_win)),
-		mPaused(false),
-		mRemote(remote)
-{	
-	mPhysicWorld.reset( new PhysicWorld() );
-
-	setInputSources(std::make_shared<InputSource>(), std::make_shared<InputSource>());
-
-	if(!mRemote)
-		mPhysicWorld->setEventCallback( [this]( const MatchEvent& event ) { mEvents.push_back(event); } );
-
-	mPlayersEnabled[LEFT_PLAYER] = true;
-	mPlayersEnabled[RIGHT_PLAYER] = true;
-}
-
-DuelMatch::DuelMatch(bool remote, std::string rules, bool playersEnabled[MAX_PLAYERS], int score_to_win) :		
+DuelMatch::DuelMatch(bool remote, std::string rules, bool playerEnabled[MAX_PLAYERS], int score_to_win) :		
 		mPaused(false),
 		mRemote(remote)
 {
-	auto config = IUserConfigReader::createUserConfigReader("config.xml");
-	mBlobCollisions = config->getBool("blob_collisions");
+	auto config = IUserConfigReader::createUserConfigReader("config.xml");	
 	if (score_to_win == 0)
 		score_to_win = config->getInteger("scoretowin");
 	mLogic = createGameLogic(rules, this, score_to_win);
-	mPhysicWorld.reset(new PhysicWorld(playersEnabled, mBlobCollisions));
+	mPhysicWorld.reset(new PhysicWorld(playerEnabled));
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
-	{
-		mPlayersEnabled[i] = playersEnabled[i];
-		if(playersEnabled[i])
+	{		
+		if(playerEnabled[i])
 			setInputSource((PlayerSide)i, std::make_shared<InputSource>());
 	}
 
@@ -73,31 +53,13 @@ DuelMatch::DuelMatch(bool remote, std::string rules, bool playersEnabled[MAX_PLA
 		mPhysicWorld->setEventCallback([this](const MatchEvent& event) { mEvents.push_back(event); });
 }
 
-
-void DuelMatch::setPlayers(PlayerIdentity lplayer, PlayerIdentity rplayer)
-{
-	mPlayers[LEFT_PLAYER] = lplayer;
-	mPlayers[RIGHT_PLAYER] = rplayer;
-}
-
 void DuelMatch::setPlayers(PlayerIdentity players[MAX_PLAYERS])
 {
 	for (int i = 0; i < MAX_PLAYERS; i++)
-	{
-		mPlayers[i] = players[i];
+	{		
+		if(getPlayerEnabled(PlayerSide(i)))
+			mPlayers[i] = players[i];
 	}	
-}
-
-void DuelMatch::setInputSources(std::shared_ptr<InputSource> linput, std::shared_ptr<InputSource> rinput )
-{
-	if(linput)
-		mInputSources[LEFT_PLAYER] = linput;
-
-	if(rinput)
-		mInputSources[RIGHT_PLAYER] = rinput;
-
-	mInputSources[LEFT_PLAYER]->setMatch(this);
-	mInputSources[RIGHT_PLAYER]->setMatch(this);
 }
 
 void DuelMatch::setInputSource(PlayerSide player, std::shared_ptr<InputSource> input)
@@ -109,9 +71,20 @@ void DuelMatch::setInputSource(PlayerSide player, std::shared_ptr<InputSource> i
 	}	
 }
 
-void DuelMatch::reset()
+void DuelMatch::setPlayerEnabled(PlayerSide player, bool enabled)
 {	
-	mPhysicWorld.reset(new PhysicWorld(mPlayersEnabled, mBlobCollisions));
+	mPhysicWorld->setPlayerEnabled(player, enabled);
+}
+
+void DuelMatch::reset()
+{
+	bool playerEnabled[MAX_PLAYERS];
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		playerEnabled[i] = mPhysicWorld->getPlayerEnabled(PlayerSide(i));
+	}
+
+	mPhysicWorld.reset(new PhysicWorld(playerEnabled));
 	mLogic = mLogic->clone();
 }
 
@@ -135,7 +108,7 @@ void DuelMatch::step()
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
-		if (mPlayersEnabled[i])
+		if (getPlayerEnabled(PlayerSide(i)))
 		{
 			mTransformedInput[i] = mInputSources[i]->updateInput();
 
@@ -204,8 +177,8 @@ void DuelMatch::step()
 
 void DuelMatch::setScore(int left, int right)
 {
-	mLogic->setScore(LEFT_PLAYER, left);
-	mLogic->setScore(RIGHT_PLAYER, right);
+	mLogic->setScore(LEFT_SIDE, left);
+	mLogic->setScore(RIGHT_SIDE, right);
 }
 
 void DuelMatch::pause()
@@ -228,10 +201,10 @@ PlayerSide DuelMatch::winningPlayer() const
 //todo ???
 int DuelMatch::getHitcount(PlayerSide player) const
 {
-	if (player == LEFT_PLAYER)
-		return mLogic->getTouches(LEFT_PLAYER);
-	else if (player == RIGHT_PLAYER)
-		return mLogic->getTouches(RIGHT_PLAYER);
+	if (player == LEFT_SIDE)
+		return mLogic->getTouches(LEFT_SIDE);
+	else if (player == RIGHT_SIDE)
+		return mLogic->getTouches(RIGHT_SIDE);
 	else
 		return 0;
 }
@@ -246,12 +219,12 @@ int DuelMatch::getTouches(PlayerSide player) const
 	return mLogic->getTouches(player);
 }
 
-int DuelMatch::getPlayersCount(PlayerSide player) const
+int DuelMatch::getPlayersCountInTeam(PlayerSide player) const
 {
 	int count = 0;
 	for (int i = player % 2; i < MAX_PLAYERS; i+=2)
 	{
-		if (mPlayersEnabled[i])
+		if (getPlayerEnabled(PlayerSide(i)))
 			count++;
 	}
 	return count;
@@ -315,7 +288,7 @@ void DuelMatch::setState(const DuelMatchState& state)
 	
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
-		if (mPlayersEnabled[i])
+		if (getPlayerEnabled(PlayerSide(i)))
 		{
 			mTransformedInput[i] = state.playerInput[i];
 			mInputSources[i]->setInput(mTransformedInput[i]);
@@ -336,7 +309,7 @@ DuelMatchState DuelMatch::getState() const
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
-		if(mPlayersEnabled[i])
+		if(getPlayerEnabled(PlayerSide(i)))
 			state.playerInput[i] = mTransformedInput[i];
 	}
 
@@ -345,7 +318,7 @@ DuelMatchState DuelMatch::getState() const
 
 bool DuelMatch::getPlayerEnabled(PlayerSide player) const
 {
-	return mPlayersEnabled[player];
+	return mPhysicWorld->getPlayerEnabled(player);
 }
 
 void DuelMatch::setServingPlayer(PlayerSide side)
@@ -370,11 +343,11 @@ std::shared_ptr<InputSource> DuelMatch::getInputSource(PlayerSide player) const
 	return mInputSources[player];
 }
 
-void DuelMatch::resetBall( PlayerSide side )
+void DuelMatch::resetBall(PlayerSide side) const
 {
-	if (side == LEFT_PLAYER)
+	if (side == LEFT_SIDE)
 		mPhysicWorld->setBallPosition( Vector2(200, STANDARD_BALL_HEIGHT) );
-	else if (side == RIGHT_PLAYER)
+	else if (side == RIGHT_SIDE)
 		mPhysicWorld->setBallPosition( Vector2(600, STANDARD_BALL_HEIGHT) );
 	else
 		mPhysicWorld->setBallPosition( Vector2(400, 450) );

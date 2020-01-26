@@ -54,10 +54,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 const int BLOBBY_PORT = 1234;
 
-const int BLOBBY_VERSION_MAJOR = 0;
-const int BLOBBY_VERSION_MINOR = 105;
+const int BLOBBY_VERSION_MAJOR = 5;
+const int BLOBBY_VERSION_MINOR = 106;
 
-const char AppTitle[] = "Blobby Volley 2 Version 1.0";
+const char AppTitle[] = "Blobby Volley 2 Team Version 1.0";
 const int BASE_RESOLUTION_X = 800;
 const int BASE_RESOLUTION_Y = 600;
 
@@ -84,6 +84,10 @@ enum PlayerSide
 	MAX_PLAYERS // This is always one more than the highest player enum
 	            // and can be used to declare arrays
 };
+
+const int MAX_TEAM_SIZE = MAX_PLAYERS / 2;
+const int MAX_NAME_SIZE = 16;
+const int MAX_MESSAGE_SIZE = 31;
 
 enum PlayerType
 {

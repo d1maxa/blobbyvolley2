@@ -95,7 +95,7 @@ void makeEnterServerPacket(RakNet::BitStream& stream, const PlayerIdentity& play
 	stream.Write( player.getPreferredSide() );
 
 	// Send playername
-	char myname[16];
+	char myname[MAX_NAME_SIZE];
 	strncpy(myname, player.getName().c_str(), sizeof(myname));
 	stream.Write(myname, sizeof(myname));
 

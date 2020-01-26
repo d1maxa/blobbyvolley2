@@ -50,8 +50,10 @@ unsigned MatchMaker::openGame( PlayerID creator, int speed, int rules, int point
 		return -1;
 	}
 	auto create_pl = plid->second;
+		
+	std::vector<PlayerID> connected = { creator };
 
-	OpenGame newgame{creator, create_pl->getName()+"'s game" , speed, rules, points, std::vector<PlayerID>(0)};
+	OpenGame newgame{ creator, create_pl->getName() + "'s game" , speed, rules, points, connected, connected, std::vector<PlayerID>(0) };	
 
 	// if creator already has an open game, delete that
 	removePlayerFromAllGames( creator );
@@ -91,16 +93,12 @@ void MatchMaker::removeGame( unsigned id )
 	stream.Write( (unsigned char)ID_LOBBY );
 	stream.Write( (unsigned char)LobbyPacketType::REMOVED_FROM_GAME );
 	stream.Write( id );
-
-	mSendPacket( stream, g->second.creator );
-
-	// get the list of connected players and send them a notification
-	auto players = g->second.connected;
-	for( auto player : players )
-	{
-		// send disconnect message
+		
+	// get the list of connected players and send them a notification	
+	for( auto player : g->second.connected)
+	{		
+		// send disconnect message to all
 		mSendPacket( stream, player );
-
 	}
 
 	// now remove the game itself
@@ -125,7 +123,7 @@ void MatchMaker::removePlayerFromAllGames( PlayerID player )
 	{
 		for( auto& w : p.second.connected )
 		{
-			if( w == player )
+			if(	w == player )
 			{
 				// we break hereafter, so changing the container during iteration is not a problem
 				removePlayerFromGame( p.first, w );
@@ -149,6 +147,14 @@ void MatchMaker::removePlayerFromGame( unsigned game, PlayerID player )
 	assert( p != g->second.connected.end() );
 
 	g->second.connected.erase(p);
+	
+	p = std::find(g->second.firstTeam.begin(), g->second.firstTeam.end(), player);
+	if (p != g->second.firstTeam.end())
+		g->second.firstTeam.erase(p);
+	
+	p = std::find(g->second.secondTeam.begin(), g->second.secondTeam.end(), player);
+	if (p != g->second.secondTeam.end())
+		g->second.secondTeam.erase(p);
 
 	mSendPacket( stream, player );
 
@@ -196,18 +202,46 @@ void MatchMaker::joinGame(PlayerID player, unsigned gameID)
 
 	// now we can add the player to the game
 	g->second.connected.push_back(player);
+	if (g->second.firstTeam.size() <= g->second.secondTeam.size())
+		g->second.firstTeam.push_back(player);		
+	else
+		g->second.secondTeam.push_back(player);
 
 	broadcastOpenGameStatus(gameID);
 }
 
-// start a game
-void MatchMaker::startGame(PlayerID host, PlayerID client)
-{
-	auto first = mPlayerMap.find(host);
-	auto second = mPlayerMap.find(client);
-	assert( first != mPlayerMap.end() );
-	assert( second != mPlayerMap.end() );
+void MatchMaker::changePlayerTeam(PlayerID player)
+{	
+	for (auto& p : mOpenGames)
+	{
+		if (std::find(p.second.connected.begin(), p.second.connected.end(), player) != p.second.connected.end())
+		{
+			auto pos = std::find(p.second.firstTeam.begin(), p.second.firstTeam.end(), player);
+			if (pos != p.second.firstTeam.end())
+			{
+				p.second.firstTeam.erase(pos);
+				p.second.secondTeam.push_back(player);
+			}
+			else
+			{
+				pos = std::find(p.second.secondTeam.begin(), p.second.secondTeam.end(), player);
+				if (pos != p.second.secondTeam.end())
+					p.second.secondTeam.erase(pos);
+				p.second.firstTeam.push_back(player);
+			}
 
+			broadcastOpenGameStatus(p.first);
+
+			return;
+		}		
+	}
+
+	std::cerr << "player " << player << " tried to change a team, but there is no game with him!\n";
+}
+
+// start a game
+void MatchMaker::startGame(PlayerID host)
+{
 	// find game of host
 	auto game = std::find_if(mOpenGames.begin(), mOpenGames.end(),
 							[host](const std::pair<unsigned, OpenGame>& g) { return g.second.creator == host; } );
@@ -217,45 +251,51 @@ void MatchMaker::startGame(PlayerID host, PlayerID client)
 		return;
 	}
 
-	// check that client is a potential game client
-	auto conlist = game->second.connected;
-    if( std::find(conlist.begin(), conlist.end(), client) == conlist.end() )
+	std::shared_ptr<NetworkPlayer> players[MAX_PLAYERS];
+	bool switchSide[MAX_PLAYERS];
+	bool playerEnabled[MAX_PLAYERS];
+
+	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		std::cerr << "player " << host << " tried to start a game with player " << client
-					<< " who was not available!\n";
-		return;
+		switchSide[i] = false;
+		playerEnabled[i] = false;
 	}
 
-	// ok, all tests passed, the request seems valid. we can start the game and remove both players
-	PlayerSide switchSide = NO_PLAYER;
-
-	auto leftPlayer = first;
-	auto rightPlayer = second;
-
-	// put first player on his desired side in game
-	if(RIGHT_PLAYER == first->second->getDesiredSide())
+	//Left side
+	auto num = 0;
+	for (auto player : game->second.firstTeam)
 	{
-		std::swap(leftPlayer, rightPlayer);
+		auto found = mPlayerMap.find(player);
+		assert(found != mPlayerMap.end());
+		assert(num < MAX_PLAYERS);
+		players[num] = found->second;
+		switchSide[num] = found->second->getDesiredSide() == RIGHT_SIDE;
+		playerEnabled[num] = true;
+		num += 2;		
 	}
 
-	// if both players want the same side, one of them is going to get inverted game data
-	if (first->second->getDesiredSide() == second->second->getDesiredSide())
+	//Right side
+	num = 1;
+	for (auto player : game->second.secondTeam)
 	{
-		// if both wanted to play on the left, the right player is the inverted one, if both wanted right, the left
-		if (second->second->getDesiredSide() == LEFT_PLAYER)
-			switchSide = RIGHT_PLAYER;
-		if (second->second->getDesiredSide() == RIGHT_PLAYER)
-			switchSide = LEFT_PLAYER;
+		auto found = mPlayerMap.find(player);
+		assert(found != mPlayerMap.end());
+		assert(num < MAX_PLAYERS);
+		players[num] = found->second;
+		switchSide[num] = found->second->getDesiredSide() == LEFT_SIDE;
+		playerEnabled[num] = true;
+		num += 2;
 	}
-
-	mCreateGame( leftPlayer->second, rightPlayer->second, switchSide,
+	
+	// ok, all tests passed, the request seems valid. we can start the game and remove both players			
+	mCreateGame(players, playerEnabled, switchSide,
 				mPossibleGameRules.at(game->second.rules).file,
 				game->second.points,
 				mPossibleGameSpeeds.at(game->second.speed) );
 
 	// remove players from available player list
-	removePlayer( host );
-	removePlayer( client );
+	for(auto player : game->second.connected)
+		removePlayer(player);	
 }
 
 
@@ -277,27 +317,31 @@ void MatchMaker::receiveLobbyPacket( PlayerID player, RakNet::BitStream& stream 
 
 		openGame( player, speed, rules, score);
 		return;
-	} else if( type == LobbyPacketType::JOIN_GAME )
+	} 
+	else if( type == LobbyPacketType::JOIN_GAME )
 	{
 		unsigned id;
 		reader->uint32(id);
 		joinGame(player, id);
 
 		return;
-	} else if( type == LobbyPacketType::LEAVE_GAME )
+	} 
+	else if( type == LobbyPacketType::LEAVE_GAME )
 	{
 		// normally, a player should only be in one game.
 		removePlayerFromAllGames( player );
 
 		return;
-	} else if ( type == LobbyPacketType::START_GAME )
+	}
+	else if (type == LobbyPacketType::CHANGE_TEAM)
+	{		
+		changePlayerTeam(player);
+		return;
+	}	
+	else if ( type == LobbyPacketType::START_GAME )
 	{
-		// read target player
-		PlayerID target;
-		reader->generic<PlayerID>( target );
-
 		// try to set up the game:
-		startGame( player, target );
+		startGame(player);
 	}
 }
 
@@ -370,9 +414,12 @@ void MatchMaker::broadcastOpenGameStatus( unsigned gameID )
 	out->uint32(g->second.speed);
 	out->uint32(g->second.rules);
 	out->uint32(g->second.points);
-	out->generic<std::vector<PlayerID>>(g->second.connected);
+
+	out->generic<std::vector<PlayerID>>(g->second.firstTeam);
+	out->generic<std::vector<PlayerID>>(g->second.secondTeam);
+		
 	std::vector<std::string> plnames;
-	for( auto& pid : g->second.connected )
+	for( auto& pid : g->second.firstTeam )
 	{
 		auto player = mPlayerMap.find(pid);
 		if( player == mPlayerMap.end() )
@@ -384,8 +431,20 @@ void MatchMaker::broadcastOpenGameStatus( unsigned gameID )
 	}
 	out->generic<std::vector<std::string>>( plnames );
 
-	// send to all players
-	mSendPacket(stream, g->second.creator );
+	plnames.clear();
+	for (auto& pid : g->second.secondTeam)
+	{
+		auto player = mPlayerMap.find(pid);
+		if (player == mPlayerMap.end())
+			plnames.push_back("INVALID!");
+		else
+		{
+			plnames.push_back(player->second->getName());
+		}
+	}
+	out->generic<std::vector<std::string>>(plnames);
+
+	// send to all players	
 	for(auto p: g->second.connected)
 		mSendPacket(stream, p );
 }
@@ -397,8 +456,8 @@ void MatchMaker::broadcastOpenGameList()
 		auto player = p.first;
 		bool ingame = false;
 		for(auto& g : mOpenGames)
-		{
-			if(g.second.creator == player || std::count(g.second.connected.begin(), g.second.connected.end(), player) != 0)
+		{			
+			if(std::find(g.second.connected.begin(), g.second.connected.end(), player) != g.second.connected.end())
 			{
 				ingame = true;
 				break;

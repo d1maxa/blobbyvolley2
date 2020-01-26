@@ -158,14 +158,7 @@ class IGameLogic: public ObjectCounter<IGameLogic>
 		void clearSquishes(PlayerSide side);
 
 		// helper functions
-
-		/// convert player side into array index
-		static inline int side2index(PlayerSide side)
-		{			
-			//todo always return the same???
-			return side == NO_PLAYER ? MAX_PLAYERS : side - LEFT_PLAYER;
-		}
-
+		
 		/// determine the opposite player side
 		static inline PlayerSide other_side(PlayerSide side)
 		{

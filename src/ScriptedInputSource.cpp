@@ -109,7 +109,7 @@ PlayerInputAbs ScriptedInputSource::getNextInput()
 
 	if (!getMatch()->getBallActive() && mSide ==
 			// if no player is serving player, assume the left one is
-			(getMatch()->getServingPlayer() == NO_PLAYER ? LEFT_PLAYER : getMatch()->getServingPlayer() ))
+			(getMatch()->getServingPlayer() == NO_PLAYER ? LEFT_SIDE : getMatch()->getServingPlayer() ))
 	{
 		serving = true;
 	}

@@ -57,11 +57,12 @@ int CURRENT_NETWORK_LAG = -1;
 
 
 /* implementation */
-NetworkGameState::NetworkGameState( std::shared_ptr<RakClient> client, int rule_checksum, int score_to_win)
-	: GameState(new DuelMatch(true, DEFAULT_RULES_FILE, score_to_win))
+NetworkGameState::NetworkGameState( std::shared_ptr<RakClient> client, bool playerEnabled[MAX_PLAYERS], PlayerSide player, int rule_checksum, int score_to_win)
+	: GameState(new DuelMatch(true, DEFAULT_RULES_FILE, playerEnabled, score_to_win))
 	, mNetworkState(WAITING_FOR_OPPONENT)
 	, mWaitingForReplay(false)
 	, mClient(client)
+	, mPlayerIndex(player)
 	, mWinningPlayer(NO_PLAYER)
 	, mSelectedChatmessage(0)
 	, mChatCursorPosition(0)
@@ -70,7 +71,7 @@ NetworkGameState::NetworkGameState( std::shared_ptr<RakClient> client, int rule_
 	std::shared_ptr<IUserConfigReader> config = IUserConfigReader::createUserConfigReader("config.xml");
 	mOwnSide = (PlayerSide)config->getInteger("network_side");
 	mUseRemoteColor = config->getBool("use_remote_color");
-	mLocalInput.reset(new LocalInputSource(mOwnSide));
+	mLocalInput.reset(new LocalInputSource(player));
 	mLocalInput->setMatch(mMatch.get());
 
 	/// \todo why do we need this here?
@@ -78,27 +79,31 @@ NetworkGameState::NetworkGameState( std::shared_ptr<RakClient> client, int rule_
 
 	// game is not started until two players are connected
 	mMatch->pause();
-
+	
 	// load/init players
-
-	if(mOwnSide == LEFT_PLAYER)
-	{
-		PlayerIdentity localplayer = config->loadPlayerIdentity(LEFT_PLAYER, true);
-		PlayerIdentity remoteplayer = config->loadPlayerIdentity(RIGHT_PLAYER, true);
-		mLocalPlayer = &mMatch->getPlayer( LEFT_PLAYER );
-		mRemotePlayer = &mMatch->getPlayer( RIGHT_PLAYER );
-		mMatch->setPlayers( localplayer, remoteplayer );
-	}
-	 else
-	{
-		PlayerIdentity localplayer = config->loadPlayerIdentity(RIGHT_PLAYER, true);
-		PlayerIdentity remoteplayer = config->loadPlayerIdentity(LEFT_PLAYER, true);
-		mLocalPlayer = &mMatch->getPlayer( RIGHT_PLAYER );
-		mRemotePlayer = &mMatch->getPlayer( LEFT_PLAYER );
-		mMatch->setPlayers( remoteplayer, localplayer );
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{		
+		if(playerEnabled[i])
+		{
+			mPlayers[i] = config->loadPlayerIdentity(PlayerSide(i), true);
+		}
 	}
 
-	mRemotePlayer->setName("");
+	if(mOwnSide != player)
+	{
+		//player is in the same team as mOwnSide, swap them
+		auto color = mPlayers[mOwnSide].getStaticColor();
+		mPlayers[mOwnSide].setStaticColor(mPlayers[player].getStaticColor());
+		mPlayers[player].setStaticColor(color);
+
+		auto name = mPlayers[mOwnSide].getName();
+		mPlayers[mOwnSide].setName(mPlayers[player].getName());
+		mPlayers[player].setName(name);
+	}
+
+	mMatch->setPlayers(mPlayers);
+
+	//mRemotePlayer->setName("");
 
 	// check the rules
 	int ourChecksum = 0;
@@ -193,14 +198,40 @@ void NetworkGameState::step_impl()
 			{
 				// In this state, a leaving opponent would not be very surprising
 				if (mNetworkState != PLAYER_WON)
-					mNetworkState = OPPONENT_DISCONNECTED;
+				{
+					unsigned char playerIndex;
+					unsigned char continueGame;
+					RakNet::BitStream stream(packet->data, packet->length, false);
+					stream.IgnoreBytes(1);	//ID_OPPONENT_DISCONNECTED
+					stream.Read(playerIndex);
+					stream.Read(continueGame);
+
+					if ((bool)continueGame)
+					{						
+						mMatch->setPlayerEnabled(PlayerSide(playerIndex), false);
+
+						mNetworkState = PAUSING;
+						mMatch->pause();
+
+						appendChat(mPlayers[playerIndex].getName() + " disconnected from game", false);
+					}
+					else
+						mNetworkState = OPPONENT_DISCONNECTED;
+				}
 				break;
 			}
 			case ID_PAUSE:
 				if (mNetworkState == PLAYING)
 				{
+					unsigned char playerIndex;
+					RakNet::BitStream stream(packet->data, packet->length, false);
+					stream.IgnoreBytes(1);	//ID_PAUSE
+					stream.Read(playerIndex);
+					
 					mNetworkState = PAUSING;
 					mMatch->pause();
+
+					appendChat(mPlayers[playerIndex].getName() + " paused game", false);					
 				}
 				break;
 			case ID_UNPAUSE:
@@ -209,11 +240,12 @@ void NetworkGameState::step_impl()
 					SDL_StopTextInput();
 					mNetworkState = PLAYING;
 					mMatch->unpause();
+					//todo check bit
 				}
 				break;
 			case ID_GAME_READY:
 			{
-				char charName[16];
+				char charName[MAX_NAME_SIZE];
 				RakNet::BitStream stream(packet->data, packet->length, false);
 
 				stream.IgnoreBytes(1);	// ignore ID_GAME_READY
@@ -223,31 +255,39 @@ void NetworkGameState::step_impl()
 				stream.Read(speed);
 				SpeedController::getMainInstance()->setGameSpeed(speed);
 
-				// read playername
-				stream.Read(charName, sizeof(charName));
-
-				// ensures that charName is null terminated
-				charName[sizeof(charName)-1] = '\0';
-
-				// read colors
-				int temp;
-				stream.Read(temp);
-				Color ncolor = temp;
-
-				mRemotePlayer->setName(charName);
-
 				std::string playerNames[MAX_PLAYERS];
-				playerNames[LEFT_PLAYER] = mLocalPlayer->getName();
-				playerNames[RIGHT_PLAYER] = mRemotePlayer->getName();
-				setDefaultReplayName(playerNames);
 
-				// check whether to use remote player color
-				if(mUseRemoteColor)
+				//get other players' names and colors
+				for (int i = 0; i < MAX_PLAYERS; ++i)
 				{
-					mRemotePlayer->setStaticColor(ncolor);
-					RenderManager::getSingleton().redraw();
-				}
+					if(mMatch->getPlayerEnabled(PlayerSide(i)) && i != mPlayerIndex)
+					{
+						// read playername
+						stream.Read(charName, sizeof(charName));
 
+						// ensures that charName is null terminated
+						charName[sizeof(charName) - 1] = '\0';
+
+						// read colors
+						int temp;
+						stream.Read(temp);
+						Color ncolor = temp;
+
+						mPlayers[i].setName(charName);
+
+						// check whether to use remote player color
+						if (mUseRemoteColor)
+						{
+							mPlayers[i].setStaticColor(ncolor);
+							//RenderManager::getSingleton().redraw();
+						}
+
+						playerNames[i] = mPlayers[i].getName();
+					}
+				}
+								
+				setDefaultReplayName(playerNames);
+				
 				// Workarround for SDL-Renderer
 				// Hides the GUI when networkgame starts
 				rmanager->redraw();
@@ -312,14 +352,14 @@ void NetworkGameState::step_impl()
 				RakNet::BitStream stream(packet->data, packet->length, false);
 				stream.IgnoreBytes(1);	// ID_CHAT_MESSAGE
 				// Insert Message in the log and focus the last element
-				char message[31];
+				unsigned char playerIndex;
+				stream.Read(playerIndex);
+				char message[MAX_MESSAGE_SIZE];
 				stream.Read(message, sizeof(message));
-				message[30] = '\0';
+				message[sizeof(message) - 1] = '\0';
 
 				// Insert Message in the log and focus the last element
-				mChatlog.push_back((std::string) message);
-				mChatOrigin.push_back(false);
-				mSelectedChatmessage = mChatlog.size() - 1;
+				appendChat(mPlayers[playerIndex].getName() + ": " + (std::string) message, false);				
 				SoundManager::getSingleton().playSound("sounds/chat.wav", ROUND_START_SOUND_VOLUME);
 				break;
 			}
@@ -552,15 +592,13 @@ void NetworkGameState::step_impl()
 				if ((InputManager::getSingleton()->getLastActionKey() == "Return") && (mChattext != ""))
 				{
 					RakNet::BitStream stream;
-					char message[31];
+					char message[MAX_MESSAGE_SIZE];
 
 					strncpy(message, mChattext.c_str(), sizeof(message));
 					stream.Write((unsigned char)ID_CHAT_MESSAGE);
 					stream.Write(message, sizeof(message));
 					mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
-					mChatlog.push_back(mChattext);
-					mChatOrigin.push_back(true);
-					mSelectedChatmessage = mChatlog.size() - 1;
+					appendChat(mPlayers[mPlayerIndex].getName() + ": " + mChattext, true);					
 					mChattext = "";
 					mChatCursorPosition = 0;
 					SoundManager::getSingleton().playSound("sounds/chat.wav", ROUND_START_SOUND_VOLUME);
@@ -570,6 +608,14 @@ void NetworkGameState::step_impl()
 		}
 	}
 }
+
+void NetworkGameState::appendChat(std::string message, bool local)
+{
+	mChatlog.push_back(message);
+	mChatOrigin.push_back(local);
+	mSelectedChatmessage = mChatlog.size() - 1;
+}
+
 
 const char* NetworkGameState::getStateName() const
 {

@@ -116,11 +116,11 @@ private:
 	unsigned mSpeed = 0;
 	unsigned mRules = 0;
 	unsigned mScore = 3;
-
-	unsigned mSelectedPlayer = 0;
-
-	std::vector<PlayerID> mOtherPlayers;
-	std::vector<std::string> mOtherPlayerNames;
+		
+	std::vector<PlayerID> mFirstTeam;
+	std::vector<PlayerID> mSecondTeam;
+	std::vector<std::string> mFirstTeamNames;
+	std::vector<std::string> mSecondTeamNames;
 };
 
 #endif // LOBBYSTATES_H_INCLUDED

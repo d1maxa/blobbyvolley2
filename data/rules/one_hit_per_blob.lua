@@ -15,7 +15,7 @@ function OnBallHitsPlayer(player)
 		return
 	end
 
-	if get_players_count(player) > 1 and player == lasthit then
+	if get_players_count_in_team(player) > 1 and player == lasthit then
 		--lasthit = NO_PLAYER		
 		mistake(player, opponent(player), 1)
 	else

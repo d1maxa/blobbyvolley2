@@ -78,7 +78,7 @@ class ReplayRecorder : public ObjectCounter<ReplayRecorder>
 		void finalize(unsigned int left, unsigned int right);
 
 		// game setup setting
-		void setPlayersEnabled(bool playersEnabled[MAX_PLAYERS]);
+		void setPlayerEnabled(bool playerEnabled[MAX_PLAYERS]);
 		void setPlayerNames(std::string playerNames[MAX_PLAYERS]);
 		void setPlayerColors(Color colors[MAX_PLAYERS]);
 		void setGameSpeed(int fps);
@@ -90,7 +90,7 @@ class ReplayRecorder : public ObjectCounter<ReplayRecorder>
 
 		// general replay attributes
 		int mBytesPerStep;		
-		bool mPlayersEnabled[MAX_PLAYERS];
+		bool mPlayerEnabled[MAX_PLAYERS];
 		std::string mPlayerNames[MAX_PLAYERS];
 		Color mPlayerColors[MAX_PLAYERS];
 		unsigned int mEndScore[MAX_PLAYERS];

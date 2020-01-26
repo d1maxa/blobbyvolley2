@@ -280,8 +280,7 @@ void IGameLogic::onBallHitsPlayer(PlayerSide side)
 	OnBallHitsPlayerHandler(side);
 
 	// reset other players touches after OnBallHitsPlayerHandler is called, so
-	// we have still access to its old value inside the handler function
-	//mTouches[side2index(other_side(side))] = 0;
+	// we have still access to its old value inside the handler function	
 	clearTouches(other_side(side));
 }
 

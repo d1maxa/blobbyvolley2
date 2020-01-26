@@ -226,6 +226,11 @@ void TextManager::setDefault()
 	mStrings[NET_POINTS] = "points: ";
 	mStrings[NET_RULES_TITLE] = "rules: ";
 	mStrings[NET_RULES_BY] = " by ";
+	mStrings[NET_CHANGE_TEAM] = "change team";
+	mStrings[NET_EMPTY_TEAM] = "one team is empty";
+	mStrings[NET_TOO_MANY_PLAYERS] = "too many players in one team";
+	mStrings[NET_FIRST_TEAM] = "first team";
+	mStrings[NET_SECOND_TEAM] = "second team";
 
 	mStrings[OP_TOUCH_TYPE] = "touch input type:";
 	mStrings[OP_TOUCH_ARROWS] = "arrow keys";
@@ -286,8 +291,7 @@ void TextManager::setDefault()
 	mStrings[OP_MEDIUM] = "medium";
 	mStrings[OP_STRONG] = "strong";
 	mStrings[OP_RULES] = "rules:";
-	mStrings[OP_ENABLED] = "enabled";
-	mStrings[OP_BLOB_COLLISIONS] = "blob collisions";
+	mStrings[OP_ENABLED] = "enabled";	
 
 	mStrings[UPDATE_NOTIFICATION] = "please visit http://blobby.sourceforge.net/ for a new version of blobby volley";
 }

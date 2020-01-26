@@ -14,6 +14,9 @@
 #include "GenericIO.h"
 #include "GameLogic.h"
 
+// this global allows the host game thread to be killed
+extern std::atomic<bool> gKillHostThread;
+
 LobbySubstate::~LobbySubstate()
 {
 }
@@ -36,6 +39,7 @@ LobbyState::LobbyState(ServerInfo info, PreviousState previous) :
 	PlayerSide side = (PlayerSide)config.getInteger("network_side");
 
 	// load player identity
+	//todo make network player settings
 	if(side == LEFT_PLAYER)
 	{
 		mLocalPlayer = config.loadPlayerIdentity(LEFT_PLAYER, true);
@@ -170,10 +174,21 @@ void LobbyState::step_impl()
 				stream.IgnoreBytes(1);	// ignore ID_RULES_CHECKSUM
 
 				int serverChecksum, scoreToWin;
+				unsigned char playerIndex;
+				int playerEnabledBit;
+
 				stream.Read(serverChecksum);
 				stream.Read(scoreToWin);
+				stream.Read(playerIndex);
+				stream.Read(playerEnabledBit);
+								
+				bool playerEnabled[MAX_PLAYERS];
+				for (int i = 0; i < MAX_PLAYERS; ++i)
+				{
+					playerEnabled[i] = (bool)(playerEnabledBit & (1 << i));
+				}
 
-				switchState( new NetworkGameState( mClient, serverChecksum, scoreToWin ) );
+				switchState( new NetworkGameState(mClient, playerEnabled, PlayerSide(playerIndex), serverChecksum, scoreToWin ) );
 				}
 				break;
 			default:
@@ -233,6 +248,10 @@ void LobbyState::step_impl()
 	// back button
 	if (imgui.doButton(GEN_ID, Vector2(50, 530), TextManager::LBL_CANCEL))
 	{
+		//todo Leave game/disconnect
+		//Close local server
+		gKillHostThread = true;
+
 		if( mPrevious == PreviousState::ONLINE )
 			switchState( new OnlineSearchState );
 		else if ( mPrevious == PreviousState::LAN )
@@ -380,26 +399,38 @@ LobbyGameSubstate::LobbyGameSubstate(std::shared_ptr<RakClient> client, std::sha
 	in->string(mGameName);
 	in->uint32(mSpeed);
 	in->uint32(mRules);
-	in->uint32(mScore);
-	in->generic<std::vector<PlayerID>>(mOtherPlayers);
-	in->generic<std::vector<std::string>>(mOtherPlayerNames);
+	in->uint32(mScore);	
+	in->generic<std::vector<PlayerID>>(mFirstTeam);
+	in->generic<std::vector<PlayerID>>(mSecondTeam);
+	in->generic<std::vector<std::string>>(mFirstTeamNames);
+	in->generic<std::vector<std::string>>(mSecondTeamNames);
 }
 
 void LobbyGameSubstate::step( const ServerStatusData& status )
 {
 	IMGUI& imgui = IMGUI::getSingleton();
-	bool no_players = mOtherPlayers.empty();
-	if(mOtherPlayerNames.empty())
+		
+	bool noPlayers = mFirstTeam.size() + mSecondTeam.size() == 1;
+	bool oneTeamEmpty = mFirstTeam.size() == 0 || mSecondTeam.size() == 0;
+	bool tooManyPlayersInTeam = mFirstTeam.size() > MAX_TEAM_SIZE || mSecondTeam.size() > MAX_TEAM_SIZE;
+	
+	if (mFirstTeamNames.empty())
 	{
-		mOtherPlayerNames.push_back(""); // fake entry to prevent crash! not nice!
+		mFirstTeamNames.push_back(""); // fake entry to prevent crash! not nice!
 	}
 
-	bool doEnterGame = false;
-	if( imgui.doSelectbox(GEN_ID, Vector2(25.0, 90.0), Vector2(375.0, 470.0), mOtherPlayerNames, mSelectedPlayer) == SBA_DBL_CLICK )
+	if (mSecondTeamNames.empty())
 	{
-		doEnterGame = true;
+		mSecondTeamNames.push_back(""); // fake entry to prevent crash! not nice!
 	}
 
+	unsigned selectedPlayer = 0;
+	imgui.doText(GEN_ID, Vector2(35, 87), TextManager::getSingleton()->getString(TextManager::NET_FIRST_TEAM), TF_SMALL_FONT);
+	imgui.doSelectbox(GEN_ID, Vector2(25.0, 100.0), Vector2(375.0, 277.0), mFirstTeamNames, selectedPlayer);
+
+	imgui.doText(GEN_ID, Vector2(35, 280), TextManager::getSingleton()->getString(TextManager::NET_SECOND_TEAM), TF_SMALL_FONT);
+	imgui.doSelectbox(GEN_ID, Vector2(25.0, 293.0), Vector2(375.0, 470.0), mSecondTeamNames, selectedPlayer);
+	
 	// info panel
 	imgui.doOverlay(GEN_ID, Vector2(425.0, 90.0), Vector2(775.0, 470.0));
 
@@ -419,41 +450,52 @@ void LobbyGameSubstate::step( const ServerStatusData& status )
 		imgui.doText(GEN_ID, Vector2(445, 205 + i / 25 * 15), rulesstring.substr(i, 25), TF_SMALL_FONT);
 	}
 
-	// open game button
-	if( mIsHost )
+	//commands buttons
+	if (imgui.doButton(GEN_ID, Vector2(435, 395), TextManager::getSingleton()->getString(TextManager::NET_CHANGE_TEAM)))
 	{
-		if( imgui.doButton(GEN_ID, Vector2(435, 395), TextManager::getSingleton()->getString(TextManager::NET_LEAVE) ) )
-		{
-			RakNet::BitStream stream;
-			stream.Write((unsigned char)ID_LOBBY);
-			stream.Write((unsigned char)LobbyPacketType::LEAVE_GAME);
-			mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
-		}
+		RakNet::BitStream stream;
+		stream.Write((unsigned char)ID_LOBBY);
+		stream.Write((unsigned char)LobbyPacketType::CHANGE_TEAM);
+		mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
+	}
 
-		if( !no_players && (imgui.doButton(GEN_ID, Vector2(435, 430), TextManager::getSingleton()->getString(TextManager::MNU_LABEL_START) ) || doEnterGame) )
+	if (imgui.doButton(GEN_ID, Vector2(435, 430), TextManager::getSingleton()->getString(TextManager::NET_LEAVE)))
+	{
+		RakNet::BitStream stream;
+		stream.Write((unsigned char)ID_LOBBY);
+		stream.Write((unsigned char)LobbyPacketType::LEAVE_GAME);
+		mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
+	}
+
+	auto canStart = false;
+	if (noPlayers)
+	{
+		imgui.doText(GEN_ID, Vector2(435, 340), TextManager::getSingleton()->getString(TextManager::GAME_WAITING), TF_SMALL_FONT);
+	}
+	else if (oneTeamEmpty)
+	{
+		imgui.doText(GEN_ID, Vector2(435, 340), TextManager::getSingleton()->getString(TextManager::NET_EMPTY_TEAM), TF_SMALL_FONT);
+	}
+	else if (tooManyPlayersInTeam)
+	{
+		imgui.doText(GEN_ID, Vector2(435, 340), TextManager::getSingleton()->getString(TextManager::NET_TOO_MANY_PLAYERS), TF_SMALL_FONT);
+	}
+	else
+	{
+		canStart = true;
+	}
+
+	// start game button
+	if( mIsHost )
+	{		
+		if (canStart && imgui.doButton(GEN_ID, Vector2(435, 360), TextManager::getSingleton()->getString(TextManager::MNU_LABEL_START)))
 		{
 			// Start Game
 			RakNet::BitStream stream;
 			stream.Write((unsigned char)ID_LOBBY);
-			stream.Write((unsigned char)LobbyPacketType::START_GAME);
-			auto writer = createGenericWriter(&stream);
-			writer->generic<PlayerID>( mOtherPlayers.at(mSelectedPlayer) );
+			stream.Write((unsigned char)LobbyPacketType::START_GAME);			
 			mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
 		}
-
-		if( no_players )
-		{
-			imgui.doText(GEN_ID, Vector2(435, 430), TextManager::getSingleton()->getString(TextManager::GAME_WAITING));
-		}
-	} else
-	{
-		if( imgui.doButton(GEN_ID, Vector2(435, 430), TextManager::getSingleton()->getString(TextManager::NET_LEAVE) ) )
-		{
-			RakNet::BitStream stream;
-			stream.Write((unsigned char)ID_LOBBY);
-			stream.Write((unsigned char)LobbyPacketType::LEAVE_GAME);
-			mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
-		}
-	}
+	} 
 }
 

@@ -102,6 +102,5 @@ class ReplayPlayer : public ObjectCounter<ReplayPlayer>
 		int mLength;
 		boost::scoped_ptr<IReplayLoader> loader;
 
-		std::string mPlayerNames[MAX_PLAYERS];
-		bool mPlayersEnabled[MAX_PLAYERS];		
+		std::string mPlayerNames[MAX_PLAYERS];		
 };

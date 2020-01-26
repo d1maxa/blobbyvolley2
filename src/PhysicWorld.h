@@ -39,7 +39,7 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 
 	public:
 		PhysicWorld();
-		PhysicWorld(bool playersEnabled[MAX_PLAYERS], bool blobCollisions);
+		PhysicWorld(bool playerEnabled[MAX_PLAYERS]);
 		~PhysicWorld();
 
 		// set the callback
@@ -60,8 +60,7 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 		// this function calculates whether the player is on the ground
 		bool blobHitGround(PlayerSide player) const;
 
-		// Important: This assumes a fixed framerate of 60 FPS!
-		void step(const PlayerInput& leftInput, const PlayerInput& rightInput, bool isBallValid, bool isGameRunning);
+		// Important: This assumes a fixed framerate of 60 FPS!		
 		void step(PlayerInput inputs[MAX_PLAYERS], bool isBallValid, bool isGameRunning);
 
 		// gets the physic state
@@ -73,6 +72,11 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 		// helper functions
 		/// this function calculates whether two circles overlap.
 		static bool circleCircleCollision(const Vector2& pos1, float rad_1, const Vector2& pos2, float rad_2);
+
+		// gets player enabled state
+		bool getPlayerEnabled(PlayerSide player);
+		// sets player enabled state
+		void setPlayerEnabled(PlayerSide player, bool enabled);
 
 	private:
 		// Blobby animation methods
@@ -102,8 +106,7 @@ class PhysicWorld : public ObjectCounter<PhysicWorld>
 		Vector2 mBlobVelocity[MAX_PLAYERS];
 		Vector2 mBallVelocity;
 		
-		bool mPlayersEnabled[MAX_PLAYERS];
-		bool mBlobCollisions;
+		bool mPlayerEnabled[MAX_PLAYERS];		
 
 		float mBallRotation;
 		float mBallAngularVelocity;

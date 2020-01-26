@@ -83,7 +83,7 @@ class TextManager
 			GAME_WAITING,
 			GAME_OPP_LEFT,
 			GAME_PAUSED,
-			GAME_QUIT,
+			GAME_QUIT,			
 
 			// network texts
 			NET_SERVER_SCAN,
@@ -105,6 +105,11 @@ class TextManager
 			NET_POINTS,
 			NET_RULES_TITLE,
 			NET_RULES_BY,
+			NET_CHANGE_TEAM,
+			NET_EMPTY_TEAM,
+			NET_TOO_MANY_PLAYERS,
+			NET_FIRST_TEAM,
+			NET_SECOND_TEAM,
 
 			// options
 			OP_TOUCH_TYPE,
@@ -166,8 +171,7 @@ class TextManager
 			OP_MEDIUM,
 			OP_STRONG,
 			OP_RULES,
-			OP_ENABLED,
-			OP_BLOB_COLLISIONS,
+			OP_ENABLED,			
 
 			UPDATE_NOTIFICATION,
 

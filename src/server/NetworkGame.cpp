@@ -46,45 +46,55 @@ extern int SWLS_GameSteps;
 
 /* implementation */
 
-NetworkGame::NetworkGame(RakServer& server, std::shared_ptr<NetworkPlayer> leftPlayer,
-			std::shared_ptr<NetworkPlayer> rightPlayer, PlayerSide switchedSide,
-			std::string rules, int scoreToWin, float speed) :
-	mServer(server),
-	mMatch(new DuelMatch(false, rules, scoreToWin)),
+NetworkGame::NetworkGame(RakServer& server, 
+		std::shared_ptr<NetworkPlayer> players[MAX_PLAYERS],
+		bool playerEnabled[MAX_PLAYERS],
+		bool switchedSide[MAX_PLAYERS],
+		std::string rules, int scoreToWin, float speed) :
+	mServer(server),	
 	mSpeedController(speed),
-	mLeftInput (new InputSource()),
-	mRightInput(new InputSource()),
-	mLeftLastTime(-1),
-	mRightLastTime(-1),
+	mMatch(new DuelMatch(false, rules, playerEnabled, scoreToWin)),	
 	mRecorder(new ReplayRecorder()),
 	mGameValid(true)
 {
-	// check that both players don't have an active game
-	if(leftPlayer->getGame())
-	{
-		BOOST_THROW_EXCEPTION( std::runtime_error("Trying to start a game with player already in another game!") );
-	}
-
-	if(rightPlayer->getGame())
-	{
-		BOOST_THROW_EXCEPTION( std::runtime_error("Trying to start a game with player already in another game!") );
-	}
-
-	mMatch->setPlayers( leftPlayer->getIdentity(), rightPlayer->getIdentity() );
-	mMatch->setInputSources(mLeftInput, mRightInput);
-
-	mLeftPlayer = leftPlayer->getID();
-	mRightPlayer = rightPlayer->getID();
-	mSwitchedSide = switchedSide;
-
+	PlayerIdentity playersIds[MAX_PLAYERS];
 	std::string playerNames[MAX_PLAYERS];
 	Color playerColors[MAX_PLAYERS];
 
-	playerNames[LEFT_PLAYER] = leftPlayer->getName();
-	playerNames[RIGHT_PLAYER] = rightPlayer->getName();
-	playerColors[LEFT_PLAYER] = leftPlayer->getColor();
-	playerColors[RIGHT_PLAYER] = rightPlayer->getColor();
+	int playerEnabledBit = 0;
+	int swappedPlayerEnabledBit = 0;
 
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{			
+		// check that player don't have an active game
+		if(playerEnabled[i])
+		{
+			mSwitchedSide[i] = switchedSide[i];
+
+			if (players[i]->getGame())
+				BOOST_THROW_EXCEPTION(std::runtime_error("Trying to start a game with player already in another game!"));				
+
+			playersIds[i] = players[i]->getIdentity();
+
+			mInputs[i] = std::make_shared<InputSource>();
+			mMatch->setInputSource(PlayerSide(i), mInputs[i]);
+
+			mLastTime[i] = -1;
+			mPlayers[i] = players[i]->getID();
+
+			playerNames[i] = players[i]->getName();
+			playerColors[i] = players[i]->getColor();
+
+			mRulesSent[i] = false;
+			mPlayerNames[i] = playerNames[i];
+
+			playerEnabledBit |= 1 << i;
+			swappedPlayerEnabledBit |= 1 << getSwappedPlayerIndex(PlayerSide(i));
+		}		
+	}
+
+	mMatch->setPlayers(playersIds);			
+	
 	mRecorder->setPlayerNames(playerNames);
 	mRecorder->setPlayerColors(playerColors);
 	mRecorder->setGameSpeed(mSpeedController.getGameSpeed());
@@ -92,9 +102,7 @@ NetworkGame::NetworkGame(RakServer& server, std::shared_ptr<NetworkPlayer> leftP
 
 	// read rulesfile into a string
 	int checksum = 0;
-	mRulesLength = 0;
-	mRulesSent[0] = false;
-	mRulesSent[1] = false;
+	mRulesLength = 0;	
 
 	rules = FileRead::makeLuaFilename( rules );
 	FileRead file(std::string("rules/") + rules);
@@ -104,11 +112,37 @@ NetworkGame::NetworkGame(RakServer& server, std::shared_ptr<NetworkPlayer> leftP
 
 	// writing rules checksum
 	RakNet::BitStream stream;
+		
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if(playerEnabled[i])
+		{
+			stream.Write((unsigned char)ID_RULES_CHECKSUM);
+			stream.Write(checksum);
+			stream.Write(mMatch->getScoreToWin());
+			if (mSwitchedSide[i])
+			{
+				stream.Write((unsigned char)getSwappedPlayerIndex(PlayerSide(i)));
+				stream.Write(swappedPlayerEnabledBit);
+			}
+			else
+			{
+				stream.Write((unsigned char)i);
+				stream.Write(playerEnabledBit);
+			}
+
+			mServer.Send(&stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mPlayers[i], false);
+			stream.Reset();
+		}
+	}
+
+	/*
 	stream.Write((unsigned char)ID_RULES_CHECKSUM);
 	stream.Write(checksum);
 	stream.Write(mMatch->getScoreToWin());
 	/// \todo write file author and title, too; maybe add a version number in scripts, too.
 	broadcastBitstream(stream);
+	*/
 
 	// game loop
 	mGameThread = std::thread(
@@ -121,7 +155,7 @@ NetworkGame::NetworkGame(RakServer& server, std::shared_ptr<NetworkPlayer> leftP
 				SWLS_GameSteps++;
 				mSpeedController.update();
 			}
-		}					);
+		});
 }
 
 NetworkGame::~NetworkGame()
@@ -154,18 +188,31 @@ void NetworkGame::broadcastBitstream(const RakNet::BitStream& stream, const RakN
 
 	assert( &stream != &switchedstream );
 	assert( stream.GetData() != switchedstream.GetData() );
+
+	/*
 	const RakNet::BitStream& leftStream = mSwitchedSide == LEFT_PLAYER ? switchedstream : stream;
 	const RakNet::BitStream& rightStream = mSwitchedSide == RIGHT_PLAYER ? switchedstream : stream;
 
 	mServer.Send(&leftStream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mLeftPlayer, false);
 	mServer.Send(&rightStream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mRightPlayer, false);
+	*/
+
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if(mMatch->getPlayerEnabled(PlayerSide(i)))
+		{
+			mServer.Send(mSwitchedSide[i]? &switchedstream : &stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mPlayers[i], false);
+		}
+	}
 }
 
 void NetworkGame::broadcastBitstream(const RakNet::BitStream& stream)
 {
-
-	mServer.Send(&stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mLeftPlayer, false);
-	mServer.Send(&stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mRightPlayer, false);
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if(mMatch->getPlayerEnabled(PlayerSide(i)))
+			mServer.Send(&stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mPlayers[i], false);
+	}	
 }
 
 void NetworkGame::processPackets()
@@ -183,6 +230,22 @@ void NetworkGame::processPackets()
 	}
 }
 
+PlayerSide NetworkGame::getPlayerSide(PlayerID playerID) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if (mMatch->getPlayerEnabled(PlayerSide(i)))
+		{
+			if (mPlayers[i] == playerID)
+			{
+				return PlayerSide(i);
+			}
+		}
+	}
+
+	assert(0);
+}
+
 /// this function processes a single packet received for this network game
 void NetworkGame::processPacket( const packet_ptr& packet )
 {
@@ -191,17 +254,41 @@ void NetworkGame::processPacket( const packet_ptr& packet )
 		case ID_CONNECTION_LOST:
 		case ID_DISCONNECTION_NOTIFICATION:
 		{
+			auto player = getPlayerSide(packet->playerId);
+
 			RakNet::BitStream stream;
+			RakNet::BitStream switchStream;						
+
 			stream.Write((unsigned char)ID_OPPONENT_DISCONNECTED);
-			broadcastBitstream(stream);
+			stream.Write((unsigned char)player);
+
+			switchStream.Write((unsigned char)ID_OPPONENT_DISCONNECTED);
+			switchStream.Write((unsigned char)getSwappedPlayerIndex(player));
+			
+			auto noPlayersInTeam = true;
+			mMatch->setPlayerEnabled(player, false);			
+			for (int i = player % 2; i < MAX_PLAYERS; i+=2)
+			{
+				if (mMatch->getPlayerEnabled(PlayerSide(i)))
+				{
+					noPlayersInTeam = false;
+					break;
+				}
+			}
+			//cannot continue without players in one team
+			if (noPlayersInTeam)
+				mGameValid = false;
+
+			stream.Write((unsigned char)mGameValid);
+			switchStream.Write((unsigned char)mGameValid);
+			broadcastBitstream(stream, switchStream);
 			mMatch->pause();
-			mGameValid = false;
+
 			break;
 		}
 
 		case ID_INPUT_UPDATE:
 		{
-
 			unsigned time;
 			RakNet::BitStream stream(packet->data, packet->length, false);
 
@@ -210,6 +297,13 @@ void NetworkGame::processPacket( const packet_ptr& packet )
 			stream.Read(time);
 			PlayerInputAbs newInput(stream);
 
+			auto player = getPlayerSide(packet->playerId);
+			if (mSwitchedSide[player])
+				newInput.swapSides();
+			mInputs[player]->setInput(newInput);
+			mLastTime[player] = time;		
+
+			/*
 			if (packet->playerId == mLeftPlayer)
 			{
 				if (mSwitchedSide == LEFT_PLAYER)
@@ -224,24 +318,56 @@ void NetworkGame::processPacket( const packet_ptr& packet )
 				mRightInput->setInput(newInput);
 				mRightLastTime = time;
 			}
+			 */
+
 			break;
 		}
 
 		case ID_PAUSE:
 		{
+			auto player = getPlayerSide(packet->playerId);
 			RakNet::BitStream stream;
+			RakNet::BitStream switchStream;
+
 			stream.Write((unsigned char)ID_PAUSE);
-			broadcastBitstream(stream);
+			stream.Write((unsigned char)player);
+
+			switchStream.Write((unsigned char)ID_PAUSE);
+			switchStream.Write((unsigned char)getSwappedPlayerIndex(player));
+
+			broadcastBitstream(stream, switchStream);
 			mMatch->pause();
+
+			for (int i = 0; i < MAX_PLAYERS; ++i)
+			{
+				mPaused[i] = true;
+			}
 			break;
 		}
 
 		case ID_UNPAUSE:
 		{
+			auto player = getPlayerSide(packet->playerId);						
 			RakNet::BitStream stream;
+			RakNet::BitStream switchStream;
+
 			stream.Write((unsigned char)ID_UNPAUSE);
-			broadcastBitstream(stream);
-			mMatch->unpause();
+			stream.Write((unsigned char)player);			
+
+			switchStream.Write((unsigned char)ID_UNPAUSE);
+			switchStream.Write((unsigned char)getSwappedPlayerIndex(player));
+
+			mPaused[player] = false;
+			auto unpaused = isGameUnpaused();
+			
+			stream.Write((unsigned char)unpaused);
+			switchStream.Write((unsigned char)unpaused);
+
+			broadcastBitstream(stream, switchStream);
+						
+			if (unpaused)
+				mMatch->unpause();
+			
 			break;
 		}
 
@@ -250,20 +376,40 @@ void NetworkGame::processPacket( const packet_ptr& packet )
 			RakNet::BitStream stream(packet->data, packet->length, false);
 
 			stream.IgnoreBytes(1); // ID_CHAT_MESSAGE
-			char message[31];
+			char message[MAX_MESSAGE_SIZE];
 			/// \todo we need to acertain that this package contains at least 31 bytes!
 			///			otherwise, we send just uninitialized memory to the client
 			///			thats no real security problem but i think we should address
 			///			this nonetheless
 			stream.Read(message, sizeof(message));
 
+			auto player = getPlayerSide(packet->playerId);
 			RakNet::BitStream stream2;
+			RakNet::BitStream switchStream;
+
 			stream2.Write((unsigned char)ID_CHAT_MESSAGE);
+			stream2.Write((unsigned char)player);
 			stream2.Write(message, sizeof(message));
+
+			switchStream.Write((unsigned char)ID_CHAT_MESSAGE);
+			switchStream.Write((unsigned char)getSwappedPlayerIndex(player));
+			switchStream.Write(message, sizeof(message));
+
+			for (int i = 0; i < MAX_PLAYERS; ++i)
+			{
+				if(mMatch->getPlayerEnabled(PlayerSide(i)) && i != player)
+				{
+					mServer.Send(mSwitchedSide[i]? &switchStream : &stream2, LOW_PRIORITY, RELIABLE_ORDERED, 0, mPlayers[i], false);
+				}
+			}			
+
+			/*
 			if (mLeftPlayer == packet->playerId)
 				mServer.Send(&stream2, LOW_PRIORITY, RELIABLE_ORDERED, 0, mRightPlayer, false);
 			else
 				mServer.Send(&stream2, LOW_PRIORITY, RELIABLE_ORDERED, 0, mLeftPlayer, false);
+			 */
+
 			break;
 		}
 
@@ -287,7 +433,9 @@ void NetworkGame::processPacket( const packet_ptr& packet )
 			bool needRules;
 			stream->IgnoreBytes(1);
 			stream->Read(needRules);
-			mRulesSent[mLeftPlayer == packet->playerId ? LEFT_PLAYER : RIGHT_PLAYER] = true;
+
+			//mRulesSent[mLeftPlayer == packet->playerId ? LEFT_PLAYER : RIGHT_PLAYER] = true;					
+			mRulesSent[getPlayerSide(packet->playerId)] = true;
 
 			if (needRules)
 			{
@@ -303,8 +451,54 @@ void NetworkGame::processPacket( const packet_ptr& packet )
 			if (isGameStarted())
 			{
 				// buffer for playernames
-				char name[16];
+				char name[MAX_NAME_SIZE];
+				stream = std::make_shared<RakNet::BitStream>();
 
+				for (int i = 0; i < MAX_PLAYERS; ++i)
+				{
+					if(mMatch->getPlayerEnabled(PlayerSide(i)))
+					{						
+						stream->Write((unsigned char)ID_GAME_READY);
+						stream->Write((int)mSpeedController.getGameSpeed());
+
+						if(mSwitchedSide[i])
+						{
+							for (int j = RIGHT_PLAYER; j < MAX_PLAYERS; j+=2)
+							{
+								if(i != j && mMatch->getPlayerEnabled(PlayerSide(j)))
+								{
+									strncpy(name, mMatch->getPlayer(PlayerSide(j)).getName().c_str(), sizeof(name));
+									stream->Write(name, sizeof(name));
+									stream->Write(mMatch->getPlayer(PlayerSide(j)).getStaticColor().toInt());								
+								}
+
+								auto opp = j - 1;
+								if (i != opp && mMatch->getPlayerEnabled(PlayerSide(opp)))
+								{
+									strncpy(name, mMatch->getPlayer(PlayerSide(opp)).getName().c_str(), sizeof(name));
+									stream->Write(name, sizeof(name));
+									stream->Write(mMatch->getPlayer(PlayerSide(opp)).getStaticColor().toInt());
+								}
+							}							
+						}
+						else
+						{
+							for (int j = 0; j < MAX_PLAYERS; ++j)
+							{
+								if (i != j && mMatch->getPlayerEnabled(PlayerSide(j)))
+								{
+									strncpy(name, mMatch->getPlayer(PlayerSide(j)).getName().c_str(), sizeof(name));
+									stream->Write(name, sizeof(name));
+									stream->Write(mMatch->getPlayer(PlayerSide(j)).getStaticColor().toInt());
+								}
+							}
+						}
+
+						mServer.Send(stream.get(), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mPlayers[i], false);
+						stream->Reset();
+					}
+				}
+				/*
 				// writing data into leftStream
 				RakNet::BitStream leftStream;
 				leftStream.Write((unsigned char)ID_GAME_READY);
@@ -322,7 +516,7 @@ void NetworkGame::processPacket( const packet_ptr& packet )
 				rightStream.Write(mMatch->getPlayer(LEFT_PLAYER).getStaticColor().toInt());
 
 				mServer.Send(&leftStream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mLeftPlayer, false);
-				mServer.Send(&rightStream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mRightPlayer, false);
+				mServer.Send(&rightStream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mRightPlayer, false);*/
 			}
 
 			break;
@@ -340,6 +534,25 @@ bool NetworkGame::isGameValid() const
 	return mGameValid;
 }
 
+bool NetworkGame::isGameStarted()
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if (mMatch->getPlayerEnabled(PlayerSide(i)) && !mRulesSent[i])
+			return false;
+	}
+	return true;	
+}
+
+bool NetworkGame::isGameUnpaused()
+{	
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if (mMatch->getPlayerEnabled(PlayerSide(i)) && mPaused[i])
+			return false;
+	}
+	return true;
+}
 
 void NetworkGame::step()
 {
@@ -361,7 +574,7 @@ void NetworkGame::step()
 			// if someone has won, the game is paused
 			mMatch->pause();
 			mRecorder->record(mMatch->getState());
-			mRecorder->finalize( mMatch->getScore(LEFT_PLAYER), mMatch->getScore(RIGHT_PLAYER) );
+			mRecorder->finalize( mMatch->getScore(LEFT_SIDE), mMatch->getScore(RIGHT_SIDE) );
 
 			RakNet::BitStream stream;
 			stream.Write((unsigned char)ID_WIN_NOTIFICATION);
@@ -369,7 +582,7 @@ void NetworkGame::step()
 
 			RakNet::BitStream switchStream;
 			switchStream.Write((unsigned char)ID_WIN_NOTIFICATION);
-			switchStream.Write(winning == LEFT_PLAYER ? RIGHT_PLAYER : LEFT_PLAYER);
+			switchStream.Write(winning == LEFT_SIDE ? RIGHT_SIDE : LEFT_SIDE);
 
 			broadcastBitstream(stream, switchStream);
 		}
@@ -380,9 +593,51 @@ void NetworkGame::step()
 
 void NetworkGame::broadcastPhysicState(const DuelMatchState& state) const
 {
-	DuelMatchState ms = state;	// modifiable copy
+	auto ms = state;	// modifiable copy
+	auto swappedMs = state; //swapped copy
+	swappedMs.swapSides();
 
 	RakNet::BitStream stream;
+	std::shared_ptr<GenericOut> out;
+
+	//auto swapped = false;
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if(mMatch->getPlayerEnabled(PlayerSide(i)))
+		{
+			stream.Write((unsigned char)ID_GAME_UPDATE);
+			stream.Write(mLastTime[i]);
+
+			/// \todo this required dynamic memory allocation! not good!
+			out = createGenericWriter(&stream);
+			/*
+			if (mSwitchedSide[i])
+			{
+				if (!swapped)
+				{
+					ms.swapSides();
+					swapped = true;
+				}
+			}
+			else
+			{
+				if(swapped)
+				{
+					//switch back to original state
+					ms.swapSides();
+					swapped = false;
+				}
+			}*/
+
+			out->generic<DuelMatchState> (mSwitchedSide[i] ? swappedMs : ms);
+			mServer.Send(&stream, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, 0, mPlayers[i], false);
+
+			// reset state and stream
+			stream.Reset();
+		}
+	}
+
+	/*
 	stream.Write((unsigned char)ID_GAME_UPDATE);
 	stream.Write( mLeftLastTime );
 
@@ -409,14 +664,26 @@ void NetworkGame::broadcastPhysicState(const DuelMatchState& state) const
 	out->generic<DuelMatchState> (ms);
 
 	mServer.Send(&stream, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, 0, mRightPlayer, false);
+	*/
+}
+
+PlayerSide NetworkGame::getSwappedPlayerIndex(PlayerSide index) const
+{
+	PlayerSide player;
+	if (index % 2)
+		player = PlayerSide(index - 1);
+	else
+		player = PlayerSide(index + 1);
+
+	return player;
 }
 
 // helper function that writes a single event to bit stream in a space efficient way.
 void NetworkGame::writeEventToStream(RakNet::BitStream& stream, MatchEvent e, bool switchSides ) const
 {
 	stream.Write((unsigned char)e.event);
-	if( switchSides )
-		stream.Write((unsigned char)(e.side == LEFT_PLAYER ? RIGHT_PLAYER : LEFT_PLAYER ) );
+	if (switchSides)	
+		stream.Write((unsigned char)getSwappedPlayerIndex(e.side));	
 	else
 		stream.Write((unsigned char)e.side);
 	if( e.event == MatchEvent::BALL_HIT_BLOB )
@@ -431,6 +698,22 @@ void NetworkGame::broadcastGameEvents() const
 	// send the events
 	if( events.empty() )
 		return;
+
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if(mMatch->getPlayerEnabled(PlayerSide(i)))
+		{
+			stream.Write((unsigned char)ID_GAME_EVENTS);
+			for (auto& e : events)
+				writeEventToStream(stream, e, mSwitchedSide[i]);
+			stream.Write((char)0);
+			mServer.Send(&stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mPlayers[i], false);
+
+			stream.Reset();
+		}
+	}
+
+	/*
 	// add all the events to the stream
 	stream.Write( (unsigned char)ID_GAME_EVENTS );
 	for(auto& e : events)
@@ -443,20 +726,39 @@ void NetworkGame::broadcastGameEvents() const
 	for(auto& e : events)
 		writeEventToStream(stream, e, mSwitchedSide == RIGHT_PLAYER );
 	stream.Write((char)0);
-	mServer.Send( &stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mRightPlayer, false);
+	mServer.Send( &stream, HIGH_PRIORITY, RELIABLE_ORDERED, 0, mRightPlayer, false);*/
 }
 
-PlayerID NetworkGame::getPlayerID( PlayerSide side ) const
+PlayerID NetworkGame::getPlayerID(PlayerSide side) const
 {
-	if( side == LEFT_PLAYER )
+	assert(side >= LEFT_PLAYER && side < MAX_PLAYERS);
+	return mPlayers[side];	
+}
+
+std::string NetworkGame::getGameName() const
+{
+	std::string left;
+	std::string right;
+
+	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		return mLeftPlayer;
-	}
-	else if(side == RIGHT_PLAYER)
-	{
-		return mRightPlayer;
+		if (mMatch->getPlayerEnabled(PlayerSide(i)))
+		{
+			if (i % 2)
+			{
+				if (right.size() > 0)
+					right += ", ";
+				right += mPlayerNames[i];
+			}
+			else
+			{
+				if (left.size() > 0)
+					left += ", ";
+				left += mPlayerNames[i];
+			}
+		}
 	}
 
-	assert(0);
+	return left + " vs " + right;
 }
 

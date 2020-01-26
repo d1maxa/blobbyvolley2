@@ -43,8 +43,8 @@ public:
 	void removePlayer( PlayerID id );
 
 	// set callback functions
-	typedef std::function<void(std::shared_ptr<NetworkPlayer>, std::shared_ptr<NetworkPlayer>,
-								PlayerSide, std::string rules, int score, float speed)> create_game_fn;
+	typedef std::function<void(std::shared_ptr<NetworkPlayer>* players, bool* playerEnabled,
+		bool* switchSide, std::string rules, int score, float speed)> create_game_fn;
 	void setCreateGame( create_game_fn func) { mCreateGame = func;};
 
 	typedef std::function<void(const RakNet::BitStream& stream, PlayerID target)> send_fn;
@@ -75,11 +75,12 @@ private:
 	/// add a new game to the gamelist
 	unsigned addGame( OpenGame game );
 	void joinGame(PlayerID player, unsigned gameID);
-	void startGame(PlayerID host, PlayerID client);
+	void startGame(PlayerID host);
 
 	void removeGame( unsigned id );
 	void removePlayerFromAllGames( PlayerID player );
 	void removePlayerFromGame( unsigned game, PlayerID player );
+	void changePlayerTeam(PlayerID player);
 
 	/// create a new network game from the challenges id1 and id2. If either is not valid, no game is created.
 	void makeMatch( unsigned id1, unsigned id2 );
@@ -96,6 +97,8 @@ private:
 		int points;
 		// connected players
 		std::vector<PlayerID> connected;
+		std::vector<PlayerID> firstTeam;
+		std::vector<PlayerID> secondTeam;
 	};
 
 	struct Rule

@@ -121,7 +121,7 @@ void RenderManagerGP2X::init(int xResolution, int yResolution, bool fullscreen)
 
 		for (int j = 0; j < MAX_PLAYERS; ++j)
 		{
-			if (mPlayersEnabled[j])
+			if (mPlayerEnabled[j])
 			{
 				mBlob[j].push_back(colorSurface(blobImage, Color(255, 0, 0)));
 				mBlobShadow[j].push_back(colorSurface(blobShadow, Color(255, 0, 0)));
@@ -164,7 +164,7 @@ void RenderManagerGP2X::deinit()
 		
 		for (int j = 0; j < MAX_PLAYERS; ++j)
 		{
-			if (mPlayersEnabled[j])
+			if (mPlayerEnabled[j])
 			{
 				SDL_FreeSurface(mBlob[j][i]);
 				SDL_FreeSurface(mBlobShadow[j][i]);
@@ -208,7 +208,7 @@ void RenderManagerGP2X::draw()
 	// Blobs shadows
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if (mPlayersEnabled[i])
+		if (mPlayerEnabled[i])
 		{
 			position.x = lround(mBlobPosition[i].x) + (200 - lround(mBlobPosition[i].y)) / 4 - 19;
 			position.y = 200 - (200 - lround(mBlobPosition[i].y)) / 16 - 10;
@@ -237,7 +237,7 @@ void RenderManagerGP2X::draw()
 
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if (mPlayersEnabled[i])
+		if (mPlayerEnabled[i])
 		{
 			position.x = lround(mBlobPosition[i].x) - 15;
 			position.y = lround(mBlobPosition[i].y) - 18;
@@ -321,7 +321,7 @@ void RenderManagerGP2X::setBall(const Vector2& position, float rotation)
 void RenderManagerGP2X::setBlob(int player, const Vector2& position, 
 	float animationState, bool enabled)
 {
-	mPlayersEnabled[player] = enabled;
+	mPlayerEnabled[player] = enabled;
 	mBlobPosition[player] = position * 0.4;
 	mBlobAnimationState[player] = animationState;	
 }

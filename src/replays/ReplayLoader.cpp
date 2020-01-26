@@ -82,7 +82,7 @@ class ReplayLoader_V2X: public IReplayLoader
 		virtual bool getPlayerEnabled(PlayerSide player) const override
 		{
 			assert(player >= LEFT_PLAYER && player < MAX_PLAYERS);
-			return mPlayersEnabled[player];
+			return mPlayerEnabled[player];
 		}
 
 		virtual int getPlayerCount() const override
@@ -286,8 +286,8 @@ class ReplayLoader_V2X: public IReplayLoader
 			mPlayersCount = 0;
 			for (int i = 0; i < MAX_PLAYERS; ++i)
 			{
-				mPlayersEnabled[i] = mPlayerNames[i].size() > 0;
-				if(mPlayersEnabled[i])
+				mPlayerEnabled[i] = mPlayerNames[i].size() > 0;
+				if(mPlayerEnabled[i])
 					mPlayersCount++;
 			}
 			mBytesPerStep = (mPlayersCount + 1) / 2;
@@ -342,7 +342,7 @@ class ReplayLoader_V2X: public IReplayLoader
 		unsigned int mGameDuration;		
 		Color mPlayerColors[MAX_PLAYERS];		
 
-		bool mPlayersEnabled[MAX_PLAYERS];
+		bool mPlayerEnabled[MAX_PLAYERS];
 		unsigned int mPlayersCount;
 		unsigned int mBytesPerStep;		
 

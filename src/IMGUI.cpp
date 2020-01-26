@@ -1047,7 +1047,7 @@ void IMGUI::doChatbox(int id, const Vector2& pos1, const Vector2& pos2, const st
 		}
 
 		obj.entries = std::vector<std::string>(entries.begin()+first, entries.begin()+last);
-		// HACK: we use taxt to store information which text is from local player and which from
+		// HACK: we use text to store information which text is from local player and which from
 		//			remote player.
 		obj.text = "";
 		for(unsigned int i = first; i < last; ++i)

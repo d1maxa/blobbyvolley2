@@ -51,9 +51,11 @@ class NetworkGame : public ObjectCounter<NetworkGame>
 		// decides which player is switched.
 		/// \exception Throws FileLoadException, if the desired rules file could not be loaded
 		///	\exception Throws std::runtime_error, if \p leftPlayer or \p rightPlayer are already assigned to a game.
-		NetworkGame(RakServer& server, std::shared_ptr<NetworkPlayer> leftPlayer,
-					std::shared_ptr<NetworkPlayer> rightPlayer, PlayerSide switchedSide,
-					std::string rules, int scoreToWin, float speed);
+		NetworkGame(RakServer& server,
+			std::shared_ptr<NetworkPlayer> players[MAX_PLAYERS],
+			bool playerEnabled[MAX_PLAYERS],
+			bool switchedSide[MAX_PLAYERS], 
+			std::string rules, int scoreToWin, float speed);
 
 		~NetworkGame();
 
@@ -73,6 +75,10 @@ class NetworkGame : public ObjectCounter<NetworkGame>
 		// game info
 		/// gets network IDs of players
 		PlayerID getPlayerID( PlayerSide side ) const;
+		/// gets array index of player by PlayerID
+		PlayerSide getPlayerSide(PlayerID playerID) const;
+		/// get game name
+		std::string getGameName() const;
 
 	private:
 		void broadcastBitstream(const RakNet::BitStream& stream, const RakNet::BitStream& switchedstream);
@@ -80,32 +86,38 @@ class NetworkGame : public ObjectCounter<NetworkGame>
 		void broadcastPhysicState(const DuelMatchState& state) const;
 		void broadcastGameEvents() const;
 		void writeEventToStream(RakNet::BitStream& stream, MatchEvent e, bool switchSides ) const;
-		bool isGameStarted() { return mRulesSent[LEFT_PLAYER] && mRulesSent[RIGHT_PLAYER]; }
+		bool isGameStarted();
+		bool isGameUnpaused();
+
+		PlayerSide getSwappedPlayerIndex(PlayerSide index) const;
 
 		// process a single packet
 		void processPacket( const packet_ptr& packet );
 
 		RakServer& mServer;
-		PlayerID mLeftPlayer;
-		PlayerID mRightPlayer;
-		PlayerSide mSwitchedSide;
+				
+		PlayerID mPlayers[MAX_PLAYERS];
+		bool mSwitchedSide[MAX_PLAYERS];
+		std::string mPlayerNames[MAX_PLAYERS];
 
 		PacketQueue mPacketQueue;
 		std::mutex mPacketQueueMutex;
 
 		const std::unique_ptr<DuelMatch> mMatch;
 		SpeedController mSpeedController;
-		std::shared_ptr<InputSource> mLeftInput;
-		std::shared_ptr<InputSource> mRightInput;
-		unsigned mLeftLastTime;
-		unsigned mRightLastTime;
+			
+		std::shared_ptr<InputSource> mInputs[MAX_PLAYERS];
+				
+		unsigned mLastTime[MAX_PLAYERS];
+
 		std::thread mGameThread;
 
 		const std::unique_ptr<ReplayRecorder> mRecorder;
 
 		bool mGameValid;
 
-		bool mRulesSent[MAX_PLAYERS];
+		bool mRulesSent[MAX_PLAYERS];		
+		bool mPaused[MAX_PLAYERS];
 		int mRulesLength;
 		boost::shared_array<char> mRulesString;
 };

@@ -47,8 +47,7 @@ void ReplayPlayer::load(const std::string& filename)
 
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		mPlayerNames[i] = loader->getPlayerName(PlayerSide(i));
-		mPlayersEnabled[i] = loader->getPlayerEnabled(PlayerSide(i));
+		mPlayerNames[i] = loader->getPlayerName(PlayerSide(i));		
 	}	
 
 	mPosition = 0;
@@ -57,7 +56,7 @@ void ReplayPlayer::load(const std::string& filename)
 
 bool ReplayPlayer::getPlayerEnabled(const PlayerSide side) const
 {
-	return mPlayersEnabled[side];
+	return loader->getPlayerEnabled(side);
 }
 
 std::string ReplayPlayer::getPlayerName(const PlayerSide side) const
@@ -120,7 +119,7 @@ bool ReplayPlayer::play(DuelMatch* virtual_match)
 		auto first = true;
 		for (int i = 0; i < MAX_PLAYERS; ++i)
 		{
-			if (mPlayersEnabled[i])
+			if (loader->getPlayerEnabled(PlayerSide(i)))
 			{
 				loader->getInputAt(mPosition, virtual_match->getInputSource((PlayerSide)i).get(), first);
 

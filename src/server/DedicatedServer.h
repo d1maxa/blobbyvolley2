@@ -82,8 +82,8 @@ class DedicatedServer
 		void processBlobbyServerPresent( const packet_ptr& packet );
 		// creates a new game with those players
 		// does not add the game to the active game list
-		void createGame(std::shared_ptr<NetworkPlayer> left, std::shared_ptr<NetworkPlayer> right,
-						PlayerSide switchSide, std::string rules, int scoreToWin, float gamespeed);
+		void createGame(std::shared_ptr<NetworkPlayer> players[MAX_PLAYERS], bool playerEnabled[MAX_PLAYERS],
+			bool switchSide[MAX_PLAYERS], std::string rules, int scoreToWin, float gamespeed);
 		// broadcasts the current server  status to all waiting clients
 
 		// member variables

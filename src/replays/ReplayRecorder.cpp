@@ -107,7 +107,7 @@ void ReplayRecorder::save( std::shared_ptr<FileWrite> file) const
 
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if(mPlayersEnabled[i])
+		if(mPlayerEnabled[i])
 		{
 			auto prefix = UserConfig::getPlayerPrefix(PlayerSide(i));
 
@@ -149,7 +149,7 @@ void ReplayRecorder::send(std::shared_ptr<GenericOut> target) const
 {
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if(mPlayersEnabled[i])
+		if(mPlayerEnabled[i])
 		{
 			target->string(mPlayerNames[i]);
 			target->generic<Color> (mPlayerColors[i]);
@@ -170,7 +170,7 @@ void ReplayRecorder::receive(std::shared_ptr<GenericIn> source)
 {
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if (mPlayersEnabled[i])
+		if (mPlayerEnabled[i])
 		{
 			source->string(mPlayerNames[i]);
 			source->generic<Color> (mPlayerColors[i]);			
@@ -208,7 +208,7 @@ void ReplayRecorder::record(const DuelMatchState& state)
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
-		if (mPlayersEnabled[i])
+		if (mPlayerEnabled[i])
 		{
 			if (newPacket)
 			{			
@@ -235,13 +235,13 @@ void ReplayRecorder::record(const DuelMatchState& state)
 	mEndScore[RIGHT_SIDE] = state.logicState.rightScore;
 }
 
-void ReplayRecorder::setPlayersEnabled(bool playersEnabled[MAX_PLAYERS])
+void ReplayRecorder::setPlayerEnabled(bool playerEnabled[MAX_PLAYERS])
 {
 	auto playersCount = 0;
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		mPlayersEnabled[i] = playersEnabled[i];
-		if (playersEnabled[i])
+		mPlayerEnabled[i] = playerEnabled[i];
+		if (playerEnabled[i])
 			playersCount++;
 	}
 	mBytesPerStep = (playersCount + 1) / 2;

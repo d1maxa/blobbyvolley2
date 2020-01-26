@@ -229,7 +229,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 		
 		for (int j = 0; j < MAX_PLAYERS; ++j)
 		{
-			if (mPlayersEnabled[j])
+			if (mPlayerEnabled[j])
 			{
 				// Prepare blobby textures
 				SDL_Texture* blobTex = SDL_CreateTexture(mRenderer,
@@ -301,7 +301,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if(mPlayersEnabled[i])
+		if(mPlayerEnabled[i])
 		{
 			// Create streamed textures for blood
 			SDL_Texture* blobBlood = SDL_CreateTexture(mRenderer,
@@ -341,7 +341,7 @@ void RenderManagerSDL::deinit()
 
 		for (int j = 0; j < MAX_PLAYERS; ++j)
 		{
-			if(mPlayersEnabled[j])
+			if(mPlayerEnabled[j])
 			{
 				SDL_DestroyTexture(mBlob[j][i].mSDLsf);
 				SDL_DestroyTexture(mBlobShadow[j][i].mSDLsf);
@@ -353,7 +353,7 @@ void RenderManagerSDL::deinit()
 
 	for (int j = 0; j < MAX_PLAYERS; ++j)
 	{
-		if (mPlayersEnabled[j])
+		if (mPlayerEnabled[j])
 		{
 			SDL_DestroyTexture(mBlobBlood[j].mSDLsf);			
 		}
@@ -409,7 +409,7 @@ void RenderManagerSDL::draw()
 		// Blobs shadows
 		for (int i = 0; i < MAX_PLAYERS; ++i)
 		{
-			if (mPlayersEnabled[i])
+			if (mPlayerEnabled[i])
 			{
 				position = blobShadowRect(blobShadowPosition(mBlobPosition[i]));
 				animationState = int(mBlobAnimationState[i]) % 5;
@@ -444,7 +444,7 @@ void RenderManagerSDL::draw()
 	// Drawing blobs
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if(mPlayersEnabled[i])
+		if(mPlayerEnabled[i])
 		{
 			// update blob colors
 			colorizeBlobs(i);
@@ -537,7 +537,7 @@ void RenderManagerSDL::setMouseMarker(float position)
 void RenderManagerSDL::setBlob(int player,
 		const Vector2& position, float animationState, bool enabled)
 {
-	mPlayersEnabled[player] = enabled;
+	mPlayerEnabled[player] = enabled;
 	mBlobPosition[player] = position;
 	mBlobAnimationState[player] = animationState;	
 }

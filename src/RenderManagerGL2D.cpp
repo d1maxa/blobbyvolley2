@@ -381,7 +381,7 @@ void RenderManagerGL2D::draw()
 
 		for (int i = 0; i < MAX_PLAYERS; ++i)
 		{
-			if(mPlayersEnabled[i])
+			if(mPlayerEnabled[i])
 			{
 				pos = blobShadowPosition(mBlobPosition[i]);
 				glColor4ub(mBlobColor[i].r, mBlobColor[i].g, mBlobColor[i].b, 128);
@@ -433,7 +433,7 @@ void RenderManagerGL2D::draw()
 
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if (mPlayersEnabled[i])
+		if (mPlayerEnabled[i])
 		{
 			glBindTexture(mBlob[int(mBlobAnimationState[i]) % 5]);
 			glColor3ubv(mBlobColor[i].val);
@@ -447,7 +447,7 @@ void RenderManagerGL2D::draw()
 
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if(mPlayersEnabled[i])
+		if(mPlayerEnabled[i])
 		{
 			glBindTexture(mBlobSpecular[int(mBlobAnimationState[i]) % 5]);
 			drawQuad(mBlobPosition[i].x, mBlobPosition[i].y, 128.0, 128.0);
@@ -520,7 +520,7 @@ void RenderManagerGL2D::setBall(const Vector2& position, float rotation)
 
 void RenderManagerGL2D::setBlob(int player, const Vector2& position, float animationState, bool enabled)
 {
-	mPlayersEnabled[player] = enabled;
+	mPlayerEnabled[player] = enabled;
 	mBlobPosition[player] = position;
 	mBlobAnimationState[player] = animationState;	
 }

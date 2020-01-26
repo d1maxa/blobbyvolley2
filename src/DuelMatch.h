@@ -49,15 +49,12 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 {
 	public:
 		// If remote is true, only physical responses will be calculated
-		// but hit events and score events are received from network
-
-		DuelMatch(bool remote, std::string rules, int score_to_win = 0);		
-		DuelMatch(bool remote, std::string rules, bool playersEnabled[MAX_PLAYERS], int score_to_win = 0);
-
-		void setPlayers( PlayerIdentity lplayer, PlayerIdentity rplayer);
-		void setPlayers(PlayerIdentity players[MAX_PLAYERS]);		
-		void setInputSources(std::shared_ptr<InputSource> linput, std::shared_ptr<InputSource> rinput );
+		// but hit events and score events are received from network				
+		DuelMatch(bool remote, std::string rules, bool playerEnabled[MAX_PLAYERS], int score_to_win = 0);
+				
+		void setPlayers(PlayerIdentity players[MAX_PLAYERS]);				
 		void setInputSource(PlayerSide player, std::shared_ptr<InputSource> input);
+		void setPlayerEnabled(PlayerSide player, bool enabled);
 
 		~DuelMatch();
 
@@ -71,7 +68,7 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 		// this methods allow external input
 		// events triggered by the network
 		void setScore(int left, int right);
-		void resetBall(PlayerSide side);
+		void resetBall(PlayerSide side) const;
 
 		// This reports the index of the winning player and -1 if the
 		// game is still running
@@ -88,7 +85,7 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 		int getTouches(PlayerSide player) const;
 
 		// Get players count in player's team
-		int getPlayersCount(PlayerSide player) const;
+		int getPlayersCountInTeam(PlayerSide player) const;
 
 		int getHitcount(PlayerSide player) const;
 
@@ -123,7 +120,7 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 		DuelMatchState getState() const;
 
 		// gets player enabled state
-		bool getPlayerEnabled(PlayerSide player) const;
+		bool getPlayerEnabled(PlayerSide player) const;		
 
 		//Input stuff for recording and playing replays
 		std::shared_ptr<InputSource> getInputSource(PlayerSide player) const;
@@ -145,10 +142,7 @@ class DuelMatch : public ObjectCounter<DuelMatch>
 		std::shared_ptr<InputSource> mInputSources[MAX_PLAYERS];
 		PlayerInput mTransformedInput[MAX_PLAYERS];
 
-		PlayerIdentity mPlayers[MAX_PLAYERS];
-	    //first two are always true
-		bool mPlayersEnabled[MAX_PLAYERS];
-		bool mBlobCollisions;
+		PlayerIdentity mPlayers[MAX_PLAYERS];	    				
 
 		GameLogicPtr mLogic;
 

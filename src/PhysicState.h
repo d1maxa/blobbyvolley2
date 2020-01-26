@@ -34,6 +34,7 @@ struct PhysicState
 	Vector2 blobPosition[MAX_PLAYERS];
 	Vector2 blobVelocity[MAX_PLAYERS];
 	float   blobState[MAX_PLAYERS];
+	bool playerEnabled[MAX_PLAYERS];
 
 	Vector2 ballPosition;
 	Vector2 ballVelocity;

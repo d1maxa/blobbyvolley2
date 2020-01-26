@@ -70,8 +70,7 @@ private:
 	unsigned mPlayerOptions[MAX_PLAYERS];
 	std::string mPlayerName[MAX_PLAYERS];
 	unsigned mPlayerNamePosition[MAX_PLAYERS];
-	unsigned mBotStrength[MAX_PLAYERS];
-	bool mBlobCollisions;
+	unsigned mBotStrength[MAX_PLAYERS];	
 };
 
 /*! \class GraphicOptionsState
