@@ -79,6 +79,9 @@ class LobbyState : public State
 		unsigned mPreferedSpeed = -1;
 		unsigned mPreferedRules = 0;
 		unsigned mPreferedScore = 3;
+
+		void processPacket();
+		void processState();
 };
 
 

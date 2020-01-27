@@ -110,6 +110,8 @@ class TextManager
 			NET_TOO_MANY_PLAYERS,
 			NET_FIRST_TEAM,
 			NET_SECOND_TEAM,
+			NET_PAUSED_GAME,
+			NET_WAITING_CONTINUE,
 
 			// options
 			OP_TOUCH_TYPE,

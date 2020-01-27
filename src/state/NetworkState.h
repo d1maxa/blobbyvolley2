@@ -82,5 +82,7 @@ private:
 	unsigned mChatCursorPosition;
 	std::string mChattext;
 
-	void appendChat(std::string message, bool local);
+	void processPacket();
+	void processState();
+	void appendChat(PlayerSide player, std::string message, bool local);
 };

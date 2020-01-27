@@ -58,117 +58,127 @@ LobbyState::~LobbyState()
 void LobbyState::step_impl()
 {
 	// process packets
+	processPacket();
+
+	//process current state
+	processState();
+}
+
+void LobbyState::processPacket()
+{
 	packet_ptr packet;
 	while (packet = mClient->Receive())
 	{
-		switch(packet->data[0])
+		switch (packet->data[0])
 		{
-			case ID_CONNECTION_REQUEST_ACCEPTED:
+		case ID_CONNECTION_REQUEST_ACCEPTED:
+		{
+			RakNet::BitStream stream;
+			makeEnterServerPacket(stream, mLocalPlayer);
+			mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
+
+			mSubState = std::make_shared<LobbyMainSubstate>(mClient, 0, 0, 3);
+			break;
+		}
+		case ID_CONNECTION_ATTEMPT_FAILED:
+		{
+			mLobbyState = ConnectionState::CONNECTION_FAILED;
+			break;
+		}
+
+		case ID_CONNECTION_LOST:
+		case ID_DISCONNECTION_NOTIFICATION:
+		{
+			mLobbyState = ConnectionState::DISCONNECTED;
+			break;
+		};
+		// we ignore these packets. they tell us about remote connections, which we handle manually with ID_SERVER_STATUS packets.
+		case ID_REMOTE_EXISTING_CONNECTION:
+		case ID_REMOTE_DISCONNECTION_NOTIFICATION:
+		case ID_REMOTE_NEW_INCOMING_CONNECTION:
+			// not surprising, but we are not interested in his packet
+			break;
+		case ID_LOBBY:
+		{
+			mLobbyState = ConnectionState::CONNECTED;
+			RakNet::BitStream stream(packet->data, packet->length, false);
+			auto in = createGenericReader(&stream);
+			unsigned char t;
+			in->byte(t);
+			in->byte(t);
+			if ((LobbyPacketType)t == LobbyPacketType::SERVER_STATUS)
 			{
-				RakNet::BitStream stream;
-				makeEnterServerPacket(stream, mLocalPlayer);
-				mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
+				uint32_t player_count;
+				in->uint32(player_count);
+				in->generic<std::vector<unsigned int>>(mStatus.mPossibleSpeeds);
+				in->generic<std::vector<std::string>>(mStatus.mPossibleRules);
+				in->generic<std::vector<std::string>>(mStatus.mPossibleRulesAuthor);
 
-				mSubState = std::make_shared<LobbyMainSubstate>(mClient, 0, 0, 3);
-				break;
-			}
-			case ID_CONNECTION_ATTEMPT_FAILED:
-			{
-				mLobbyState = ConnectionState::CONNECTION_FAILED;
-				break;
-			}
+				std::vector<unsigned int> gameids;
+				std::vector<std::string> gamenames;
+				std::vector<unsigned char> gamespeeds;
+				std::vector<unsigned char> gamerules;
+				std::vector<unsigned char> gamescores;
+				in->generic<std::vector<unsigned int>>(gameids);
+				in->generic<std::vector<std::string>>(gamenames);
+				in->generic<std::vector<unsigned char>>(gamespeeds);
+				in->generic<std::vector<unsigned char>>(gamerules);
+				in->generic<std::vector<unsigned char>>(gamescores);
 
-			case ID_CONNECTION_LOST:
-			case ID_DISCONNECTION_NOTIFICATION:
-			{
-				mLobbyState = ConnectionState::DISCONNECTED;
-				break;
-			};
-			// we ignore these packets. they tell us about remote connections, which we handle manually with ID_SERVER_STATUS packets.
-			case ID_REMOTE_EXISTING_CONNECTION:
-			case ID_REMOTE_DISCONNECTION_NOTIFICATION:
-			case ID_REMOTE_NEW_INCOMING_CONNECTION:
-				// not surprising, but we are not interested in his packet
-				break;
-			case ID_LOBBY:
+				mStatus.mOpenGames.clear();
+				for (unsigned i = 0; i < gameids.size(); ++i)
 				{
-				mLobbyState = ConnectionState::CONNECTED;
-				RakNet::BitStream stream(packet->data, packet->length, false);
-				auto in = createGenericReader( &stream );
-				unsigned char t;
-				in->byte(t);
-				in->byte(t);
-				if((LobbyPacketType)t == LobbyPacketType::SERVER_STATUS)
-				{
-					uint32_t player_count;
-					in->uint32( player_count );
-					in->generic<std::vector<unsigned int>>( mStatus.mPossibleSpeeds );
-					in->generic<std::vector<std::string>>( mStatus.mPossibleRules );
-					in->generic<std::vector<std::string>>( mStatus.mPossibleRulesAuthor );
+					mStatus.mOpenGames.push_back(ServerStatusData::OpenGame{ gameids.at(i), gamenames.at(i), gamerules.at(i), gamespeeds.at(i), gamescores.at(i) });
+				}
 
-					std::vector<unsigned int> gameids;
-					std::vector<std::string> gamenames;
-					std::vector<unsigned char> gamespeeds;
-					std::vector<unsigned char> gamerules;
-					std::vector<unsigned char> gamescores;
-					in->generic<std::vector<unsigned int>>( gameids );
-					in->generic<std::vector<std::string>>( gamenames );
-					in->generic<std::vector<unsigned char>>( gamespeeds );
-					in->generic<std::vector<unsigned char>>( gamerules );
-					in->generic<std::vector<unsigned char>>( gamescores );
+				// find out which settings most closely resemble the local config
+				bool first_config = (mPreferedSpeed == -1u); // detect whether we set config for the first time
+				std::shared_ptr<IUserConfigReader> config = IUserConfigReader::createUserConfigReader("config.xml");
 
-					mStatus.mOpenGames.clear();
-					for( unsigned i = 0; i < gameids.size(); ++i)
-					{
-						mStatus.mOpenGames.push_back( ServerStatusData::OpenGame{ gameids.at(i), gamenames.at(i), gamerules.at(i), gamespeeds.at(i), gamescores.at(i)});
-					}
+				// speed
+				int speed = config->getInteger("gamefps");
+				auto& speeds = mStatus.mPossibleSpeeds;
+				auto closest_speed = std::min_element(speeds.begin(), speeds.end(),
+					[speed](int a, int b) { return std::abs(a - speed) < std::abs(b - speed); });
+				mPreferedSpeed = std::distance(speeds.begin(), closest_speed);
 
-					// find out which settings most closely resemble the local config
-					bool first_config = (mPreferedSpeed == -1u); // detect whether we set config for the first time
-					std::shared_ptr<IUserConfigReader> config = IUserConfigReader::createUserConfigReader("config.xml");
+				// rules
+				auto gamelogic = createGameLogic(config->getString("rules"), nullptr, 1);
+				std::string rule = gamelogic->getTitle();
+				auto& rules = mStatus.mPossibleRules;
+				auto found = std::find(rules.begin(), rules.end(), rule);
+				/// \todo we need to open the lua file here to get the actual ruleset name.
+				if (found != rules.end())
+					mPreferedRules = std::distance(rules.begin(), found);
 
-					// speed
-					int speed = config->getInteger("gamefps");
-					auto& speeds = mStatus.mPossibleSpeeds;
-					auto closest_speed = std::min_element( speeds.begin(), speeds.end(),
-									[speed](int a, int b){ return std::abs(a-speed) < std::abs(b-speed); } );
-					mPreferedSpeed = std::distance( speeds.begin(), closest_speed );
+				// points
+				int points = config->getInteger("scoretowin");
+				std::array<unsigned, 8> scores{ 2, 5, 10, 15, 20, 25, 40, 50 };
+				auto closest_score = std::min_element(scores.begin(), scores.end(),
+					[points](int a, int b) { return std::abs(a - points) < std::abs(b - points); });
+				mPreferedScore = std::distance(scores.begin(), closest_score);
 
-					// rules
-					auto gamelogic = createGameLogic(config->getString("rules"), nullptr, 1);
-					std::string rule = gamelogic->getTitle();
-					auto& rules = mStatus.mPossibleRules;
-					auto found = std::find( rules.begin(), rules.end(), rule);
-					/// \todo we need to open the lua file here to get the actual ruleset name.
-					if( found != rules.end())
-						mPreferedRules = std::distance( rules.begin(), found );
-
-					// points
-					int points = config->getInteger( "scoretowin" );
-					std::array<unsigned, 8> scores{2, 5, 10, 15, 20, 25, 40, 50};
-					auto closest_score = std::min_element( scores.begin(), scores.end(),
-									[points](int a, int b){ return std::abs(a-points) < std::abs(b-points); } );
-					mPreferedScore = std::distance( scores.begin(), closest_score );
-
-					// if this is the first time we receive the config, create new main substate
-					if( first_config )
-					{
-						mSubState = std::make_shared<LobbyMainSubstate>(mClient, mPreferedSpeed, mPreferedRules, mPreferedScore);
-					}
-
-				} else if((LobbyPacketType)t == LobbyPacketType::GAME_STATUS)
-				{
-					mSubState = std::make_shared<LobbyGameSubstate>(mClient, in);
-				} else if((LobbyPacketType)t == LobbyPacketType::REMOVED_FROM_GAME)
+				// if this is the first time we receive the config, create new main substate
+				if (first_config)
 				{
 					mSubState = std::make_shared<LobbyMainSubstate>(mClient, mPreferedSpeed, mPreferedRules, mPreferedScore);
 				}
-				}
-				break;
-			case ID_RULES_CHECKSUM: // this packet is send when a game was created, so we probably are joining a game here.
-				// this is only a valid request if we are in the lobby game substate
-				assert(dynamic_cast<LobbyGameSubstate*>(mSubState.get()) != nullptr);
-				{
+
+			}
+			else if ((LobbyPacketType)t == LobbyPacketType::GAME_STATUS)
+			{
+				mSubState = std::make_shared<LobbyGameSubstate>(mClient, in);
+			}
+			else if ((LobbyPacketType)t == LobbyPacketType::REMOVED_FROM_GAME)
+			{
+				mSubState = std::make_shared<LobbyMainSubstate>(mClient, mPreferedSpeed, mPreferedRules, mPreferedScore);
+			}
+		}
+		break;
+		case ID_RULES_CHECKSUM: // this packet is send when a game was created, so we probably are joining a game here.
+			// this is only a valid request if we are in the lobby game substate
+			assert(dynamic_cast<LobbyGameSubstate*>(mSubState.get()) != nullptr);
+			{
 				RakNet::BitStream stream(packet->data, packet->length, false);
 
 				stream.IgnoreBytes(1);	// ignore ID_RULES_CHECKSUM
@@ -181,22 +191,24 @@ void LobbyState::step_impl()
 				stream.Read(scoreToWin);
 				stream.Read(playerIndex);
 				stream.Read(playerEnabledBit);
-								
+
 				bool playerEnabled[MAX_PLAYERS];
 				for (int i = 0; i < MAX_PLAYERS; ++i)
 				{
 					playerEnabled[i] = (bool)(playerEnabledBit & (1 << i));
 				}
 
-				switchState( new NetworkGameState(mClient, playerEnabled, PlayerSide(playerIndex), serverChecksum, scoreToWin ) );
-				}
-				break;
-			default:
-				std::cout << "Unknown packet " << int(packet->data[0]) << " received\n";
+				switchState(new NetworkGameState(mClient, playerEnabled, PlayerSide(playerIndex), serverChecksum, scoreToWin));
+			}
+			break;
+		default:
+			std::cout << "Unknown packet " << int(packet->data[0]) << " received\n";
 		}
 	}
+}
 
-
+void LobbyState::processState()
+{
 	IMGUI& imgui = IMGUI::getSingleton();
 
 	imgui.doCursor();
@@ -208,20 +220,20 @@ void LobbyState::step_impl()
 	imgui.doText(GEN_ID, Vector2(400 - 12 * std::strlen(mInfo.name), 20), mInfo.name);
 
 	// server description
-	if (mLobbyState != ConnectionState::CONNECTED )
+	if (mLobbyState != ConnectionState::CONNECTED)
 	{
 		// server description
-		if (mLobbyState == ConnectionState::CONNECTING )
+		if (mLobbyState == ConnectionState::CONNECTING)
 		{
-			imgui.doText(GEN_ID, Vector2( 100, 55 ), TextManager::NET_CONNECTING);
+			imgui.doText(GEN_ID, Vector2(100, 55), TextManager::NET_CONNECTING);
 		}
-		else if (mLobbyState == ConnectionState::DISCONNECTED )
+		else if (mLobbyState == ConnectionState::DISCONNECTED)
 		{
-			imgui.doText(GEN_ID, Vector2( 100, 55 ), TextManager::NET_DISCONNECT);
+			imgui.doText(GEN_ID, Vector2(100, 55), TextManager::NET_DISCONNECT);
 		}
-		else if (mLobbyState == ConnectionState::CONNECTION_FAILED )
+		else if (mLobbyState == ConnectionState::CONNECTION_FAILED)
 		{
-			imgui.doText(GEN_ID, Vector2( 100, 55 ), TextManager::NET_CON_FAILED);
+			imgui.doText(GEN_ID, Vector2(100, 55), TextManager::NET_CON_FAILED);
 		}
 
 		// empty player list
@@ -231,7 +243,7 @@ void LobbyState::step_impl()
 		// empty info panel
 		imgui.doOverlay(GEN_ID, Vector2(425.0, 90.0), Vector2(775.0, 470.0));
 	}
-	 else
+	else
 	{
 		std::string description = mInfo.description;
 		for (unsigned int i = 0; i < description.length(); i += 63)
@@ -240,7 +252,7 @@ void LobbyState::step_impl()
 		}
 
 
-		mSubState->step( mStatus );
+		mSubState->step(mStatus);
 	}
 
 
@@ -252,12 +264,12 @@ void LobbyState::step_impl()
 		//Close local server
 		gKillHostThread = true;
 
-		if( mPrevious == PreviousState::ONLINE )
-			switchState( new OnlineSearchState );
-		else if ( mPrevious == PreviousState::LAN )
-			switchState( new LANSearchState );
+		if (mPrevious == PreviousState::ONLINE)
+			switchState(new OnlineSearchState);
+		else if (mPrevious == PreviousState::LAN)
+			switchState(new LANSearchState);
 		else
-			switchState( new MainMenuState );
+			switchState(new MainMenuState);
 	}
 }
 

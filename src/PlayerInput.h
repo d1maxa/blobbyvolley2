@@ -75,6 +75,7 @@ class PlayerInputAbs
 		void setJump( bool v);
 
 		void setTarget( short target, PlayerSide player );
+		void setPlayer(PlayerSide player);
 
 		void swapSides();
 

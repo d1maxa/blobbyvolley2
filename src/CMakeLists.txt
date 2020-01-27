@@ -73,16 +73,17 @@ set (blobby_SRC ${common_SRC} ${inputdevice_SRC}
 	input_device/TouchInput.cpp
 	)
 
+set (blobby-server_SRC ${common_SRC}
+	server/servermain.cpp
+	)
+
 if(MINGW)
   set(CMAKE_RC_COMPILER_INIT windres)
   ENABLE_LANGUAGE(RC)
   set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> <SOURCE> <OBJECT>")
   set(blobby_SRC ../res.rc ${blobby_SRC})
+  set(blobby-server_SRC ../res.rc ${blobby-server_SRC})
 endif(MINGW)
-
-set (blobby-server_SRC ${common_SRC}
-	server/servermain.cpp
-	)
 
 find_package(Boost REQUIRED)
 find_package(PhysFS REQUIRED)

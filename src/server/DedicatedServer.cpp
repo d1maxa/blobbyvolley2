@@ -264,7 +264,7 @@ void DedicatedServer::updateGames()
 	{
 		if (!(*iter)->isGameValid())
 		{
-			syslog( LOG_DEBUG, "Removed game %s from gamelist",
+			syslog( LOG_DEBUG, "Removed game \"%s\" from gamelist",
 					(*iter)->getGameName().c_str());
 			iter = mGameList.erase(iter);
 		}

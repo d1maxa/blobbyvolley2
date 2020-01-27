@@ -231,6 +231,8 @@ void TextManager::setDefault()
 	mStrings[NET_TOO_MANY_PLAYERS] = "too many players in one team";
 	mStrings[NET_FIRST_TEAM] = "first team";
 	mStrings[NET_SECOND_TEAM] = "second team";
+	mStrings[NET_PAUSED_GAME] = "paused the game";
+	mStrings[NET_WAITING_CONTINUE] = "is waiting for continue";
 
 	mStrings[OP_TOUCH_TYPE] = "touch input type:";
 	mStrings[OP_TOUCH_ARROWS] = "arrow keys";
