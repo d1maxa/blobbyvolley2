@@ -62,10 +62,10 @@ IGameLogic::IGameLogic( int stw )
 , mSquishWall(0)
 , mSquishGround(0)
 , mLastError(NO_PLAYER)
-, mServingPlayer(NO_PLAYER)
+, mServingPlayer(NO_SIDE)
 , mIsBallValid(true)
 , mIsGameRunning(false)
-, mWinningPlayer(NO_PLAYER)
+, mWinningPlayer(NO_SIDE)
 {
 	// init clock
 	mClock.reset();
@@ -397,7 +397,7 @@ protected:
 				return RIGHT_SIDE;
 			}
 
-			return NO_PLAYER;
+			return NO_SIDE;
 		}
 
 		virtual void OnBallHitsPlayerHandler(PlayerSide side)

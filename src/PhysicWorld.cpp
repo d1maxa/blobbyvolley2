@@ -327,7 +327,7 @@ bool PhysicWorld::handleBlobbiesCollision(PlayerSide player, PlayerSide player2)
 
 	mBlobPosition[player2] += mBlobVelocity[player2];
 	mBlobPosition[player] += mBlobVelocity[player];
-
+	
 	return true;
 }
 
@@ -499,7 +499,7 @@ void PhysicWorld::handleBallWorldCollisions()
 			// pushes the ball out of the net
 			mBallPosition = (Vector2(NET_POSITION_X, NET_SPHERE_POSITION) - normal * (NET_RADIUS + BALL_RADIUS));
 
-			mCallback( MatchEvent{MatchEvent::BALL_HIT_NET_TOP, NO_PLAYER, 0} );
+			mCallback( MatchEvent{MatchEvent::BALL_HIT_NET_TOP, NO_SIDE, 0} );
 		}
 		// mBallVelocity = mBallVelocity.reflect( Vector2( mBallPosition, Vector2 (NET_POSITION_X, temp) ).normalise()).scale(0.75);
 	}

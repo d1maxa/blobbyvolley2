@@ -142,7 +142,7 @@ void ReplayState::step_impl()
 	imgui.doOverlay(GEN_ID, prog_pos, Vector2(750, 600-3), Color(0,0,0));
 	imgui.doOverlay(GEN_ID, prog_pos, Vector2(700*mReplayPlayer->getPlayProgress()+50, 600-3), Color(0,255,0));
 
-	PlayerSide side = NO_PLAYER;
+	PlayerSide side = NO_SIDE;
 	if (mReplayPlayer->endOfFile())
 	{
 		int diff = mMatch->getScore(LEFT_SIDE) - mMatch->getScore(RIGHT_SIDE);
@@ -163,7 +163,7 @@ void ReplayState::step_impl()
 	bool slow_click = imgui.doImageButton(GEN_ID, Vector2(370, 555), Vector2(24, 24),  "gfx/btn_slow.bmp");
 
 	// handle these image buttons. IMGUI is not capable of doing this.
-	if(side == NO_PLAYER)
+	if(side == NO_SIDE)
 	{
 		// control replay position
 		Vector2 mousepos = InputManager::getSingleton()->position();

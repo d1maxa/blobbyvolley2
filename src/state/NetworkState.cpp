@@ -65,7 +65,7 @@ NetworkGameState::NetworkGameState( std::shared_ptr<RakClient> client, bool play
 	, mWaitingForReplay(false)
 	, mClient(client)
 	, mPlayerIndex(player)
-	, mWinningPlayer(NO_PLAYER)
+	, mWinningPlayer(NO_SIDE)
 	, mSelectedChatmessage(0)
 	, mChatCursorPosition(0)
 	, mChattext("")
@@ -587,7 +587,7 @@ void NetworkGameState::processState()
 	case PLAYING:
 	{
 		mMatch->step();
-
+				
 		mLocalInput->updateInput();
 		PlayerInputAbs input = mLocalInput->getRealInput();
 

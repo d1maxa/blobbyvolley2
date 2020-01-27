@@ -511,7 +511,7 @@ void NetworkGame::step()
 		broadcastGameEvents();
 
 		PlayerSide winning = mMatch->winningPlayer();
-		if (winning != NO_PLAYER)
+		if (winning != NO_SIDE)
 		{
 			// if someone has won, the game is paused
 			mMatch->pause();

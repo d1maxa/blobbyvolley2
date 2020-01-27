@@ -142,7 +142,7 @@ void DuelMatch::step()
 			mLogic->onBallHitsNet( event.side );
 			break;
 		case MatchEvent::BALL_HIT_NET_TOP:
-			mLogic->onBallHitsNet( NO_PLAYER );
+			mLogic->onBallHitsNet( NO_SIDE );
 			break;
 		case MatchEvent::BALL_HIT_WALL:
 			mLogic->onBallHitsWall( event.side );
@@ -167,7 +167,7 @@ void DuelMatch::step()
 	{
 		resetBall( mLogic->getServingPlayer() );
 		mLogic->onServe();
-		mEvents.emplace_back( MatchEvent::RESET_BALL, NO_PLAYER, 0 );
+		mEvents.emplace_back( MatchEvent::RESET_BALL, NO_SIDE, 0 );
 	}
 
 	// reset events
