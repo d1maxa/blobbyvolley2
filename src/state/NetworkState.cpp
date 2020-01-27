@@ -71,7 +71,7 @@ NetworkGameState::NetworkGameState( std::shared_ptr<RakClient> client, bool play
 	std::shared_ptr<IUserConfigReader> config = IUserConfigReader::createUserConfigReader("config.xml");
 	mOwnSide = (PlayerSide)config->getInteger("network_side");
 	mUseRemoteColor = config->getBool("use_remote_color");
-	mLocalInput.reset(new LocalInputSource(player));
+	mLocalInput.reset(new LocalInputSource(mOwnSide));
 	mLocalInput->setMatch(mMatch.get());
 
 	/// \todo why do we need this here?
@@ -79,29 +79,30 @@ NetworkGameState::NetworkGameState( std::shared_ptr<RakClient> client, bool play
 
 	// game is not started until two players are connected
 	mMatch->pause();
-	
+
+	PlayerIdentity players[MAX_PLAYERS];
 	// load/init players
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{		
 		if(playerEnabled[i])
 		{
-			mPlayers[i] = config->loadPlayerIdentity(PlayerSide(i), true);
+			players[i] = config->loadPlayerIdentity(PlayerSide(i), true);
 		}
 	}
 
 	if(mOwnSide != player)
 	{
 		//player is in the same team as mOwnSide, swap them
-		auto color = mPlayers[mOwnSide].getStaticColor();
-		mPlayers[mOwnSide].setStaticColor(mPlayers[player].getStaticColor());
-		mPlayers[player].setStaticColor(color);
+		auto color = players[mOwnSide].getStaticColor();
+		players[mOwnSide].setStaticColor(players[player].getStaticColor());
+		players[player].setStaticColor(color);
 
-		auto name = mPlayers[mOwnSide].getName();
-		mPlayers[mOwnSide].setName(mPlayers[player].getName());
-		mPlayers[player].setName(name);
+		auto name = players[mOwnSide].getName();
+		players[mOwnSide].setName(players[player].getName());
+		players[player].setName(name);
 	}
 
-	mMatch->setPlayers(mPlayers);
+	mMatch->setPlayers(players);
 
 	//mRemotePlayer->setName("");
 
@@ -211,9 +212,9 @@ void NetworkGameState::step_impl()
 						mMatch->setPlayerEnabled(PlayerSide(playerIndex), false);
 
 						mNetworkState = PAUSING;
-						mMatch->pause();
+						mMatch->pause();						
 
-						appendChat(mPlayers[playerIndex].getName() + " disconnected from game", false);
+						appendChat(mMatch->getPlayer(PlayerSide(playerIndex)).getName() + " disconnected from game", false);
 					}
 					else
 						mNetworkState = OPPONENT_DISCONNECTED;
@@ -231,18 +232,39 @@ void NetworkGameState::step_impl()
 					mNetworkState = PAUSING;
 					mMatch->pause();
 
-					appendChat(mPlayers[playerIndex].getName() + " paused game", false);					
+					appendChat(mMatch->getPlayer(PlayerSide(playerIndex)).getName() + " paused game", false);
 				}
 				break;
 			case ID_UNPAUSE:
+			{
+				unsigned char playerIndex;
+				unsigned char continueGame;
+				RakNet::BitStream stream(packet->data, packet->length, false);
+				stream.IgnoreBytes(1);	//ID_UNPAUSE
+				stream.Read(playerIndex);
+				stream.Read(continueGame);
+
 				if (mNetworkState == PAUSING)
 				{
-					SDL_StopTextInput();
+					if (mPlayerIndex == playerIndex)
+					{
+						//this user exits from pause
+						SDL_StopTextInput();
+						mNetworkState = WAITING_FOR_OPPONENT;
+					}
+					else
+					{
+						appendChat(mMatch->getPlayer(PlayerSide(playerIndex)).getName() + " unpaused game", false);
+					}
+				}
+
+				if (continueGame)
+				{
 					mNetworkState = PLAYING;
 					mMatch->unpause();
-					//todo check bit
 				}
 				break;
+			}
 			case ID_GAME_READY:
 			{
 				char charName[MAX_NAME_SIZE];
@@ -256,7 +278,7 @@ void NetworkGameState::step_impl()
 				SpeedController::getMainInstance()->setGameSpeed(speed);
 
 				std::string playerNames[MAX_PLAYERS];
-
+				playerNames[mPlayerIndex] = mMatch->getPlayer(PlayerSide(mPlayerIndex)).getName();
 				//get other players' names and colors
 				for (int i = 0; i < MAX_PLAYERS; ++i)
 				{
@@ -273,16 +295,16 @@ void NetworkGameState::step_impl()
 						stream.Read(temp);
 						Color ncolor = temp;
 
-						mPlayers[i].setName(charName);
+						mMatch->getPlayer(PlayerSide(i)).setName(charName);
 
 						// check whether to use remote player color
 						if (mUseRemoteColor)
 						{
-							mPlayers[i].setStaticColor(ncolor);
+							mMatch->getPlayer(PlayerSide(i)).setStaticColor(ncolor);
 							//RenderManager::getSingleton().redraw();
 						}
 
-						playerNames[i] = mPlayers[i].getName();
+						playerNames[i] = mMatch->getPlayer(PlayerSide(i)).getName();
 					}
 				}
 								
@@ -359,7 +381,7 @@ void NetworkGameState::step_impl()
 				message[sizeof(message) - 1] = '\0';
 
 				// Insert Message in the log and focus the last element
-				appendChat(mPlayers[playerIndex].getName() + ": " + (std::string) message, false);				
+				appendChat(mMatch->getPlayer(PlayerSide(playerIndex)).getName() + ": " + (std::string) message, false);
 				SoundManager::getSingleton().playSound("sounds/chat.wav", ROUND_START_SOUND_VOLUME);
 				break;
 			}
@@ -598,7 +620,7 @@ void NetworkGameState::step_impl()
 					stream.Write((unsigned char)ID_CHAT_MESSAGE);
 					stream.Write(message, sizeof(message));
 					mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
-					appendChat(mPlayers[mPlayerIndex].getName() + ": " + mChattext, true);					
+					appendChat(mMatch->getPlayer(PlayerSide(mPlayerIndex)).getName() + ": " + mChattext, true);
 					mChattext = "";
 					mChatCursorPosition = 0;
 					SoundManager::getSingleton().playSound("sounds/chat.wav", ROUND_START_SOUND_VOLUME);

@@ -63,9 +63,7 @@ private:
 		PLAYER_WON,
 		PAUSING
 	} mNetworkState;
-		
-	PlayerIdentity mPlayers[MAX_PLAYERS];
-
+	
 	bool mUseRemoteColor;
 
 	boost::scoped_ptr<InputSource> mLocalInput;

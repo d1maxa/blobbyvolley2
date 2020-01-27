@@ -84,6 +84,7 @@ RenderManagerSDL::RenderManagerSDL()
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
 		mBlobAnimationState[i] = 0.0;
+		mPlayerEnabled[i] = true;
 	}	
 }
 
@@ -229,31 +230,28 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 		
 		for (int j = 0; j < MAX_PLAYERS; ++j)
 		{
-			if (mPlayerEnabled[j])
-			{
-				// Prepare blobby textures
-				SDL_Texture* blobTex = SDL_CreateTexture(mRenderer,
-					SDL_PIXELFORMAT_ABGR8888,
-					SDL_TEXTUREACCESS_STREAMING,
-					formatedBlobImage->w, formatedBlobImage->h);
-				SDL_SetTextureBlendMode(blobTex, SDL_BLENDMODE_BLEND);
-				SDL_UpdateTexture(blobTex, NULL, formatedBlobImage->pixels, formatedBlobImage->pitch);
+			// Prepare blobby textures
+			SDL_Texture* blobTex = SDL_CreateTexture(mRenderer,
+			                                         SDL_PIXELFORMAT_ABGR8888,
+			                                         SDL_TEXTUREACCESS_STREAMING,
+			                                         formatedBlobImage->w, formatedBlobImage->h);
+			SDL_SetTextureBlendMode(blobTex, SDL_BLENDMODE_BLEND);
+			SDL_UpdateTexture(blobTex, NULL, formatedBlobImage->pixels, formatedBlobImage->pitch);
 
-				mBlob[j].push_back(DynamicColoredTexture(
-					blobTex,
-					Color(255, 255, 255)));
+			mBlob[j].push_back(DynamicColoredTexture(
+				blobTex,
+				Color(255, 255, 255)));
 
-				// Prepare blobby shadow textures
-				SDL_Texture* blobShadowTex = SDL_CreateTexture(mRenderer,
-					SDL_PIXELFORMAT_ABGR8888,
-					SDL_TEXTUREACCESS_STREAMING,
-					formatedBlobShadowImage->w, formatedBlobShadowImage->h);
-				SDL_SetTextureBlendMode(blobShadowTex, SDL_BLENDMODE_BLEND);
-				mBlobShadow[j].push_back(DynamicColoredTexture(
-					blobShadowTex,
-					Color(255, 255, 255)));
-				SDL_UpdateTexture(blobShadowTex, NULL, formatedBlobShadowImage->pixels, formatedBlobShadowImage->pitch);
-			}
+			// Prepare blobby shadow textures
+			SDL_Texture* blobShadowTex = SDL_CreateTexture(mRenderer,
+			                                               SDL_PIXELFORMAT_ABGR8888,
+			                                               SDL_TEXTUREACCESS_STREAMING,
+			                                               formatedBlobShadowImage->w, formatedBlobShadowImage->h);
+			SDL_SetTextureBlendMode(blobShadowTex, SDL_BLENDMODE_BLEND);
+			mBlobShadow[j].push_back(DynamicColoredTexture(
+				blobShadowTex,
+				Color(255, 255, 255)));
+			SDL_UpdateTexture(blobShadowTex, NULL, formatedBlobShadowImage->pixels, formatedBlobShadowImage->pitch);
 		}					
 
 		// Load specific icon to cancel a game
@@ -301,19 +299,16 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if(mPlayerEnabled[i])
-		{
-			// Create streamed textures for blood
-			SDL_Texture* blobBlood = SDL_CreateTexture(mRenderer,
-				SDL_PIXELFORMAT_ABGR8888,
-				SDL_TEXTUREACCESS_STREAMING,
-				formatedBlobStandardBlood->w, formatedBlobStandardBlood->h);
-			SDL_SetTextureBlendMode(blobBlood, SDL_BLENDMODE_BLEND);
-			mBlobBlood[i] = DynamicColoredTexture(
-				blobBlood,
-				Color(255, 0, 0));
-			SDL_UpdateTexture(blobBlood, NULL, formatedBlobStandardBlood->pixels, formatedBlobStandardBlood->pitch);
-		}
+		// Create streamed textures for blood
+		SDL_Texture* blobBlood = SDL_CreateTexture(mRenderer,
+		                                           SDL_PIXELFORMAT_ABGR8888,
+		                                           SDL_TEXTUREACCESS_STREAMING,
+		                                           formatedBlobStandardBlood->w, formatedBlobStandardBlood->h);
+		SDL_SetTextureBlendMode(blobBlood, SDL_BLENDMODE_BLEND);
+		mBlobBlood[i] = DynamicColoredTexture(
+			blobBlood,
+			Color(255, 0, 0));
+		SDL_UpdateTexture(blobBlood, NULL, formatedBlobStandardBlood->pixels, formatedBlobStandardBlood->pitch);
 	}	
 	
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
@@ -341,11 +336,8 @@ void RenderManagerSDL::deinit()
 
 		for (int j = 0; j < MAX_PLAYERS; ++j)
 		{
-			if(mPlayerEnabled[j])
-			{
-				SDL_DestroyTexture(mBlob[j][i].mSDLsf);
-				SDL_DestroyTexture(mBlobShadow[j][i].mSDLsf);
-			}
+			SDL_DestroyTexture(mBlob[j][i].mSDLsf);
+			SDL_DestroyTexture(mBlobShadow[j][i].mSDLsf);
 		}		
 	}
 
@@ -353,10 +345,7 @@ void RenderManagerSDL::deinit()
 
 	for (int j = 0; j < MAX_PLAYERS; ++j)
 	{
-		if (mPlayerEnabled[j])
-		{
-			SDL_DestroyTexture(mBlobBlood[j].mSDLsf);			
-		}
+		SDL_DestroyTexture(mBlobBlood[j].mSDLsf);
 	}	
 
 	for (unsigned int i = 0; i < mFont.size(); ++i)

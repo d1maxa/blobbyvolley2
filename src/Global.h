@@ -137,12 +137,12 @@ struct Color
 		Uint8 val[3];
 	};
 
-	bool operator == (Color rval) const
+	bool operator == (Color& rval) const
 	{
 		return !std::memcmp(val, rval.val, 3);
 	}
 
-	bool operator != (Color rval) const
+	bool operator != (Color& rval) const
 	{
 		return !(*this == rval);
 	}

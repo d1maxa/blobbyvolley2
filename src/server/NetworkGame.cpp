@@ -94,7 +94,8 @@ NetworkGame::NetworkGame(RakServer& server,
 	}
 
 	mMatch->setPlayers(playersIds);			
-	
+
+	mRecorder->setPlayerEnabled(playerEnabled);
 	mRecorder->setPlayerNames(playerNames);
 	mRecorder->setPlayerColors(playerColors);
 	mRecorder->setGameSpeed(mSpeedController.getGameSpeed());

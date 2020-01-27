@@ -61,13 +61,16 @@ void GameState::presentGame()
 			mMatch->getWorld().getBlobState(player),
 			mMatch->getPlayerEnabled(player));
 
-		if (mMatch->getPlayer(player).getOscillating())
+		if (mMatch->getPlayerEnabled(player))
 		{
-			rmanager.setBlobColor(i, rmanager.getOscillationColor());
-		}
-		else
-		{
-			rmanager.setBlobColor(i, mMatch->getPlayer(player).getStaticColor());
+			if (mMatch->getPlayer(player).getOscillating())
+			{
+				rmanager.setBlobColor(i, rmanager.getOscillationColor());
+			}
+			else
+			{
+				rmanager.setBlobColor(i, mMatch->getPlayer(player).getStaticColor());
+			}
 		}
 	}
 	

@@ -63,6 +63,10 @@ PlayerInputAbs::PlayerInputAbs(RakNet::BitStream& stream)
 {
 	stream.Read( mFlags );
 	stream.Read( mTarget );
+
+	unsigned char playerIndex;
+	stream.Read(playerIndex);
+	mPlayer = PlayerSide(playerIndex);
 }
 
 PlayerInputAbs::PlayerInputAbs(bool l, bool r, bool j) : mFlags( F_RELATIVE ), mTarget(-1)
@@ -114,6 +118,11 @@ void PlayerInputAbs::swapSides()
 	setRight(left);
 
 	mTarget = RIGHT_PLANE - mTarget;
+
+	if (mPlayer % 2)
+		mPlayer = PlayerSide(mPlayer - 1);
+	else
+		mPlayer = PlayerSide(mPlayer + 1);
 }
 
 PlayerInput PlayerInputAbs::toPlayerInput( const DuelMatch* match ) const
@@ -143,6 +152,7 @@ void PlayerInputAbs::writeTo(RakNet::BitStream& stream)
 {
 	stream.Write( mFlags );
 	stream.Write( mTarget );
+	stream.Write( (unsigned char)mPlayer );
 }
 
 

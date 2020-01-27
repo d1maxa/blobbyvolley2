@@ -68,6 +68,10 @@ SDL_Surface* RenderManagerGP2X::colorSurface(SDL_Surface *surface, Color color)
 RenderManagerGP2X::RenderManagerGP2X()
 	: RenderManager()
 {
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{		
+		mPlayerEnabled[i] = true;
+	}
 }
 
 RenderManager* RenderManager::createRenderManagerGP2X()
@@ -121,11 +125,8 @@ void RenderManagerGP2X::init(int xResolution, int yResolution, bool fullscreen)
 
 		for (int j = 0; j < MAX_PLAYERS; ++j)
 		{
-			if (mPlayerEnabled[j])
-			{
-				mBlob[j].push_back(colorSurface(blobImage, Color(255, 0, 0)));
-				mBlobShadow[j].push_back(colorSurface(blobShadow, Color(255, 0, 0)));
-			}
+			mBlob[j].push_back(colorSurface(blobImage, Color(255, 0, 0)));
+			mBlobShadow[j].push_back(colorSurface(blobShadow, Color(255, 0, 0)));
 		}
 	}
 
@@ -164,11 +165,8 @@ void RenderManagerGP2X::deinit()
 		
 		for (int j = 0; j < MAX_PLAYERS; ++j)
 		{
-			if (mPlayerEnabled[j])
-			{
-				SDL_FreeSurface(mBlob[j][i]);
-				SDL_FreeSurface(mBlobShadow[j][i]);
-			}
+			SDL_FreeSurface(mBlob[j][i]);
+			SDL_FreeSurface(mBlobShadow[j][i]);
 		}
 	}
 

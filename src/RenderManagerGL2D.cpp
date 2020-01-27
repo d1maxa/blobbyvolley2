@@ -198,6 +198,10 @@ void RenderManagerGL2D::drawQuad(float x, float y, const Texture& tex) {
 RenderManagerGL2D::RenderManagerGL2D()
 	: RenderManager()
 {
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		mPlayerEnabled[i] = true;
+	}
 }
 
 RenderManager* RenderManager::createRenderManagerGL2D()
