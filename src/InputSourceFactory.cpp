@@ -42,7 +42,7 @@ std::shared_ptr<InputSource> InputSourceFactory::createInputSource( std::shared_
 		//  or has errors
 		if (config->getBool(prefix + "_player_human"))
 		{
-			return std::make_shared<LocalInputSource>(side);
+			return std::make_shared<LocalInputSource>(side, side);
 		}
 
 		return std::make_shared<ScriptedInputSource>("scripts/" + config->getString(prefix + "_script_name"),

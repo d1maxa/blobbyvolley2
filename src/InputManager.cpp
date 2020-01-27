@@ -59,14 +59,14 @@ InputManager::~InputManager()
 	JoystickPool::getSingleton().closeJoysticks();
 }
 
-InputDevice* InputManager::beginGame(PlayerSide side) const
+InputDevice* InputManager::beginGame(PlayerSide configPlayer, PlayerSide targetPlayer) const
 {
 	SDL_Window* window = RenderManager::getSingleton().getWindow();
 
 	// Move Mouse to default position
 	SDL_WarpMouseInWindow(window, 400, 300);
 
-	std::string prefix = UserConfig::getPlayerPrefix(side) + "_blobby_";	
+	std::string prefix = UserConfig::getPlayerPrefix(configPlayer) + "_blobby_";
 
 	UserConfig config;
 	///  \todo we need only read only access here!
@@ -79,7 +79,7 @@ InputDevice* InputManager::beginGame(PlayerSide side) const
 	{
 		int jumpbutton = config.getInteger(prefix + "mouse_jumpbutton");
 		float sensitivity = config.getFloat(prefix + "mouse_sensitivity");
-		return createMouseInput(side, jumpbutton, sensitivity);
+		return createMouseInput(targetPlayer, jumpbutton, sensitivity);
 	}
 	// load config for keyboard
 
@@ -101,7 +101,7 @@ InputDevice* InputManager::beginGame(PlayerSide side) const
 	// load config for touch
 	else if (device == "touch")
 	{
-		return createTouchInput(side, config.getInteger("blobby_touch_type"));
+		return createTouchInput(targetPlayer, config.getInteger("blobby_touch_type"));
 	}
 	else
 		std::cerr << "Error: unknown input device: " << device << std::endl;

@@ -73,7 +73,7 @@ NetworkGameState::NetworkGameState( std::shared_ptr<RakClient> client, bool play
 	std::shared_ptr<IUserConfigReader> config = IUserConfigReader::createUserConfigReader("config.xml");
 	mOwnSide = (PlayerSide)config->getInteger("network_side");
 	mUseRemoteColor = config->getBool("use_remote_color");
-	mLocalInput.reset(new LocalInputSource(mOwnSide));
+	mLocalInput.reset(new LocalInputSource(mOwnSide, player));
 	mLocalInput->setMatch(mMatch.get());
 
 	/// \todo why do we need this here?

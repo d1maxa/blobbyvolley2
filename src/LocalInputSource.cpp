@@ -28,9 +28,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* implementation */
 
-LocalInputSource::LocalInputSource(PlayerSide player)
+LocalInputSource::LocalInputSource(PlayerSide configPlayer, PlayerSide targetPlayer)
 {
-	mInputDevice = InputManager::getSingleton()->beginGame(player);
+	mInputDevice = InputManager::getSingleton()->beginGame(configPlayer, targetPlayer);
 }
 
 LocalInputSource::~LocalInputSource()

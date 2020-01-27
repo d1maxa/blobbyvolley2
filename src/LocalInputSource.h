@@ -28,7 +28,7 @@ class InputDevice;
 class LocalInputSource : public InputSource
 {
 	public:
-		LocalInputSource(PlayerSide player);
+		LocalInputSource(PlayerSide configPlayer, PlayerSide targetPlayer);
 		~LocalInputSource();
 
 		virtual PlayerInputAbs getNextInput();
