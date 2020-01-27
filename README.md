@@ -19,7 +19,7 @@ The Port for the Server is 1234.
 ### Source Code
 Clone the git repository:
 ```bash
-git clone https://github.com/danielknobe/blobbyvolley2.git
+git clone https://github.com/d1maxa/blobbyvolley2.git
 ```
 
 ### Build under Debian-based Distros
@@ -48,6 +48,9 @@ https://github.com/microsoft/vcpkg/blob/master/README.md
 3. Use dependencies by following the instructions:
 https://github.com/microsoft/vcpkg/blob/master/docs/users/integration.md
 4. Compile and run
+
+### Build under Windows using MINGW
+https://gist.github.com/d1maxa/8a93d39ccb8a1a6f4cd1717ee67d93ee
 
 ### Build under MacOS
 1. Install homebrew by following the instructions:
