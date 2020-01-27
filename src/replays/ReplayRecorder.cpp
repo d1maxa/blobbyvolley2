@@ -147,6 +147,16 @@ void ReplayRecorder::save( std::shared_ptr<FileWrite> file) const
 }
 void ReplayRecorder::send(std::shared_ptr<GenericOut> target) const
 {
+	unsigned playerEnabledBit = 0;
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		if (mPlayerEnabled[i])
+		{
+			playerEnabledBit |= 1 << i;
+		}
+	}
+	target->uint32(playerEnabledBit);
+
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
 		if(mPlayerEnabled[i])
@@ -168,8 +178,12 @@ void ReplayRecorder::send(std::shared_ptr<GenericOut> target) const
 
 void ReplayRecorder::receive(std::shared_ptr<GenericIn> source)
 {
+	unsigned playerEnabledBit = 0;
+	source->uint32(playerEnabledBit);
+
 	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
+		mPlayerEnabled[i] = (bool)(playerEnabledBit & (1 << i));
 		if (mPlayerEnabled[i])
 		{
 			source->string(mPlayerNames[i]);

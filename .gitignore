@@ -33,3 +33,5 @@ src/blobby-server
 #project platform independent
 *.zip
 config.h
+/data/rules/server_rules.lua
+/data/replays
