@@ -49,7 +49,7 @@ https://github.com/microsoft/vcpkg/blob/master/README.md
 https://github.com/microsoft/vcpkg/blob/master/docs/users/integration.md
 4. Compile and run
 
-### Build under Windows using MINGW
+### Build under Windows using MINGW (I use this method)
 https://gist.github.com/d1maxa/8a93d39ccb8a1a6f4cd1717ee67d93ee
 
 ### Build under MacOS
