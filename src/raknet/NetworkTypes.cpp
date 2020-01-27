@@ -31,6 +31,15 @@
 #include "NetworkTypes.h"
 #include "BitStream.h"
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#endif
+
 int operator==( const PlayerID& left, const PlayerID& right )
 {
 	return left.binaryAddress == right.binaryAddress && left.port == right.port;
@@ -53,6 +62,7 @@ int operator<( const PlayerID& left, const PlayerID& right )
 
 std::string PlayerID::toString() const
 {
+    /* in WIN32 this order is reverse
 	auto tmp = binaryAddress;
 	std::string ip =  std::to_string(tmp & 0xFF);
 	tmp >>= 8;
@@ -61,7 +71,10 @@ std::string PlayerID::toString() const
 	ip =  std::to_string(tmp & 0xFF) + "." + ip;
 	tmp >>= 8;
 	ip =  std::to_string(tmp & 0xFF) + "." + ip;
-
+    */
+    in_addr in;
+    in.s_addr = binaryAddress;
+    std::string ip = inet_ntoa(in);
 	return ip + ":" +  std::to_string(port);
 }
 

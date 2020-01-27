@@ -64,7 +64,10 @@ PhysicWorld::PhysicWorld(bool playerEnabled[MAX_PLAYERS])
 	, mBallAngularVelocity(STANDARD_BALL_ANGULAR_VELOCITY)
 	, mLastHitIntensity(0)	
 	, mCallback([](const MatchEvent& me) {})
-{
+{	
+	if (std::rand() % 2)
+		mBallPosition.x = 600;
+
 	for (int i = 0; i < MAX_PLAYERS; i++)
 	{
 		mPlayerEnabled[i] = playerEnabled[i];

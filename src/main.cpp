@@ -276,6 +276,8 @@ void setupPHYSFS()
 		InputManager* inputmgr = InputManager::createInputManager();
 		int running = 1;
 
+		std::srand(unsigned(std::time(0)));
+
 		DEBUG_STATUS("starting mainloop");
 
 		while (running)
