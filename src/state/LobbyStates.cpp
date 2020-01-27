@@ -423,7 +423,7 @@ void LobbyGameSubstate::step( const ServerStatusData& status )
 	IMGUI& imgui = IMGUI::getSingleton();
 		
 	bool noPlayers = mFirstTeam.size() + mSecondTeam.size() == 1;
-	bool oneTeamEmpty = mFirstTeam.size() == 0 || mSecondTeam.size() == 0;
+	bool oneTeamEmpty = mFirstTeam.empty() || mSecondTeam.empty();
 	bool tooManyPlayersInTeam = mFirstTeam.size() > MAX_TEAM_SIZE || mSecondTeam.size() > MAX_TEAM_SIZE;
 	
 	if (mFirstTeamNames.empty())

@@ -661,8 +661,33 @@ void NetworkGameState::processState()
 
 void NetworkGameState::appendChat(PlayerSide player, std::string message, bool local)
 {
-	mChatlog.push_back(mMatch->getPlayer(player).getName() + message);
-	mChatOrigin.push_back(local);
+	std::string result = mMatch->getPlayer(player).getName() + message;
+	if(result.length() > MAX_MESSAGE_SIZE)
+	{
+		//need to split
+		int spacePos = MAX_MESSAGE_SIZE;
+		while(spacePos > 0 && result[spacePos] != ' ')
+		{
+			spacePos--;
+		}
+		if (spacePos > 0)
+		{
+			mChatlog.push_back(result.substr(0, spacePos));
+			mChatlog.push_back(result.substr(spacePos + 1, result.length() - spacePos - 1));
+			mChatOrigin.push_back(local);
+			mChatOrigin.push_back(local);
+		}
+		else
+		{
+			mChatlog.push_back(result);
+			mChatOrigin.push_back(local);
+		}
+	}
+	else
+	{
+		mChatlog.push_back(result);
+		mChatOrigin.push_back(local);
+	}
 	mSelectedChatmessage = mChatlog.size() - 1;
 }
 
