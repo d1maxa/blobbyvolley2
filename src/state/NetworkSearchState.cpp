@@ -250,7 +250,7 @@ void NetworkSearchState::step_impl()
 	{
 		mEnteringServer = true;
 		imgui.resetSelection();
-		mEnteredServer = "";
+		mEnteredServer = "ip:port";
 		mServerBoxPosition = 0;
 	}
 
@@ -434,6 +434,7 @@ OnlineSearchState::OnlineSearchState()
 void OnlineSearchState::doSearchServers()
 {
 	// Get the serverlist
+	/* for 2x2 we need new list
 	try
 	{
 		BlobNet::Layer::Http http("blobby.sourceforge.net", 80);
@@ -452,7 +453,7 @@ void OnlineSearchState::doSearchServers()
 	} catch (...) {
 		std::cout << "Can't get onlineserver.xml. Unknown error." << std::endl;
 	}
-
+	*/
 	std::vector< std::pair<std::string, int> > serverList;
 
 	// Get the serverlist

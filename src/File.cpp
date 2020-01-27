@@ -64,9 +64,21 @@ void File::open(const std::string& filename, OpenMode mode, bool no_override)
 			BOOST_THROW_EXCEPTION(FileAlreadyExistsException(filename));
 		}
 
+		auto pos = filename.length() - 1;
+		while(filename[pos] != '/' && pos > 0)
+		{
+			pos--;
+		}
+		if (pos != 0)
+		{
+			auto dirName = filename.substr(0, pos);
+			if (!PHYSFS_isDirectory(dirName.c_str()) && !PHYSFS_mkdir(dirName.c_str()))
+				BOOST_THROW_EXCEPTION(FileLoadException(filename));
+		}		
+
 		mHandle = PHYSFS_openWrite(filename.c_str());
 	}
-	 else
+	else
 	{
 		mHandle = PHYSFS_openRead(filename.c_str());
 	}
