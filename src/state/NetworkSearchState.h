@@ -58,6 +58,7 @@ protected:
 	boost::scoped_ptr<RakClient> mPingClient;
 	// set this to true to step pinging before we are finished
 	std::atomic<bool> mCancelPing;
+	boost::scoped_ptr<ServerInfo> mHostedServer;
 
 private:
 	virtual void doSearchServers() = 0;
@@ -72,9 +73,7 @@ private:
 	unsigned mSelectedServer;
 	bool mDisplayInfo;
 	bool mEnteringServer;
-	bool mDisplayUpdateNotification;
-
-	boost::scoped_ptr<ServerInfo> mHostedServer;
+	bool mDisplayUpdateNotification;	
 
 	std::string mEnteredServer;
 	unsigned mServerBoxPosition;

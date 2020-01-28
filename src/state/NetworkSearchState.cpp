@@ -388,8 +388,7 @@ void NetworkSearchState::step_impl()
 
 		SDL_Delay(100); // give the server some time to start up.
 		// might cause a slight visible delay, but I think we can
-		// live with that right now.
-		searchServers();
+		// live with that right now.		
 
 		// getting the server info
 		UserConfig config;
@@ -400,6 +399,8 @@ void NetworkSearchState::step_impl()
 		std::strncpy(mHostedServer->hostname,
 					mPingClient->PlayerIDToDottedIP(mPingClient->GetInternalID()),
 					sizeof(mHostedServer->hostname));
+
+		searchServers();
 	}
 
 	if ((imgui.doButton(GEN_ID, Vector2(230, 530), TextManager::LBL_OK) && !mScannedServers.empty())
@@ -457,6 +458,11 @@ void OnlineSearchState::doSearchServers()
 	}
 	*/
 	std::vector< std::pair<std::string, int> > serverList;
+	if (mHostedServer)
+	{		
+		std::pair<std::string, int> localServer(mPingClient->PlayerIDToDottedIP(mPingClient->GetInternalID()), BLOBBY_PORT);
+		serverList.push_back(localServer);
+	}
 
 	// Get the serverlist
 	try {
@@ -513,7 +519,8 @@ void OnlineSearchState::doSearchServers()
 				}
 			}
 			std::pair<std::string, int> pairs(host, port);
-			serverList.push_back(pairs);
+			if (!mHostedServer || serverList.at(0) != pairs)
+				serverList.push_back(pairs);
 		}
 	} catch (...) {
 		std::cout << "Can't read onlineserver.xml" << std::endl;
@@ -540,8 +547,11 @@ void OnlineSearchState::doSearchServers()
 			port = BLOBBY_PORT;
 	}
 
-	std::pair<std::string, int> pairs(server.c_str(), port);
-	serverList.push_back(pairs);
+	std::pair<std::string, int> pairs(server.c_str(), port);	
+	if (std::find(serverList.begin(), serverList.end(), pairs) == serverList.end())
+	{
+		serverList.push_back(pairs);
+	}	
 
 	mScannedServers.clear();
 	mPingClient->Initialize( serverList.size() + 2, 0, 10 );
