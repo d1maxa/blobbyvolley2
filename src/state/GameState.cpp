@@ -203,9 +203,20 @@ bool GameState::displayErrorMessageBox()
 
 bool GameState::displayWinningPlayerScreen(PlayerSide winner)
 {
-	auto& imgui = IMGUI::getSingleton();
+	auto& imgui = IMGUI::getSingleton();		
+	std::string tmp;
 
-	std::string tmp = mMatch->getPlayer(winner).getName();
+	for (int i = winner; i < MAX_PLAYERS; i += 2)
+	{
+		if(mMatch->getPlayerEnabled(PlayerSide(i)))
+		{
+			if(tmp.empty())
+				tmp = mMatch->getPlayer(PlayerSide(i)).getName();
+			else
+				tmp += ", " + mMatch->getPlayer(PlayerSide(i)).getName();
+		}
+	}
+
 	imgui.doOverlay(GEN_ID, Vector2(0, 150), Vector2(800, 450));
 	imgui.doImage(GEN_ID, Vector2(190, 250), "gfx/pokal.bmp");
 	imgui.doText(GEN_ID, Vector2(500, 210), tmp, TF_ALIGN_CENTER);

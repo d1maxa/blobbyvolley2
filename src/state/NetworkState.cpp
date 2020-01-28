@@ -63,6 +63,7 @@ NetworkGameState::NetworkGameState( std::shared_ptr<RakClient> client, bool play
 	: GameState(new DuelMatch(true, DEFAULT_RULES_FILE, playerEnabled, score_to_win))
 	, mNetworkState(WAITING_FOR_OPPONENT)
 	, mWaitingForReplay(false)
+	, mIsDisconnected(false)
 	, mClient(client)
 	, mPlayerIndex(player)
 	, mWinningPlayer(NO_SIDE)
@@ -379,6 +380,7 @@ void NetworkGameState::processPacket()
 		case ID_CONNECTION_LOST:
 			if (mNetworkState != PLAYER_WON)
 				mNetworkState = DISCONNECTED;
+			mIsDisconnected = true;
 			break;
 		case ID_NO_FREE_INCOMING_CONNECTIONS:
 			mNetworkState = SERVER_FULL;
@@ -618,6 +620,16 @@ void NetworkGameState::processState()
 			mSaveReplay = true;
 			imgui.resetSelection();
 		}
+		if (!mIsDisconnected && imgui.doButton(GEN_ID, Vector2(290.0, 410.0), TextManager::NET_STAY_ON_SERVER))
+		{
+			// Send a blobby server connection request
+			RakNet::BitStream stream;
+			stream.Write((unsigned char)ID_BLOBBY_SERVER_PRESENT);
+			stream.Write(BLOBBY_VERSION_MAJOR);
+			stream.Write(BLOBBY_VERSION_MINOR);
+			mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
+		}
+
 		break;
 	}
 	case PAUSING:
@@ -673,7 +685,7 @@ void NetworkGameState::appendChat(PlayerSide player, std::string message, bool l
 		if (spacePos > 0)
 		{
 			mChatlog.push_back(result.substr(0, spacePos));
-			mChatlog.push_back(result.substr(spacePos + 1, result.length() - spacePos - 1));
+			mChatlog.push_back(result.substr(spacePos + 1));
 			mChatOrigin.push_back(local);
 			mChatOrigin.push_back(local);
 		}

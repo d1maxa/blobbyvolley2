@@ -259,8 +259,15 @@ void LobbyState::processState()
 
 	// back button
 	if (imgui.doButton(GEN_ID, Vector2(50, 530), TextManager::LBL_CANCEL))
-	{
-		//todo Leave game/disconnect
+	{		
+		if(mLobbyState == ConnectionState::CONNECTED)
+		{			
+			RakNet::BitStream stream;
+			stream.Write((unsigned char)ID_LOBBY);
+			stream.Write((unsigned char)LobbyPacketType::LEAVE_GAME);
+			mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);			
+		}
+
 		//Close local server
 		gKillHostThread = true;
 

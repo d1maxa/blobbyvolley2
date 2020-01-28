@@ -524,9 +524,11 @@ void NetworkGame::step()
 
 			RakNet::BitStream switchStream;
 			switchStream.Write((unsigned char)ID_WIN_NOTIFICATION);
-			switchStream.Write(winning == LEFT_SIDE ? RIGHT_SIDE : LEFT_SIDE);
+			switchStream.Write(getSwappedPlayerIndex(winning));
 
 			broadcastBitstream(stream, switchStream);
+
+			mGameValid = false;
 		}
 
 		broadcastPhysicState(mMatch->getState());

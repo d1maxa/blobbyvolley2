@@ -410,6 +410,8 @@ void NetworkSearchState::step_impl()
 	}
 	if (imgui.doButton(GEN_ID, Vector2(480, 530), TextManager::LBL_CANCEL))
 	{
+		//close local server
+		gKillHostThread = true;
 		switchState(new MainMenuState);
 	}
 

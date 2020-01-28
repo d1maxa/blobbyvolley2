@@ -63,7 +63,8 @@ private:
 		PLAYER_WON,
 		PAUSING
 	} mNetworkState;
-	
+
+	bool mIsDisconnected;
 	bool mUseRemoteColor;
 
 	boost::scoped_ptr<InputSource> mLocalInput;

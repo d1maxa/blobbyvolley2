@@ -113,8 +113,7 @@ void DedicatedServer::queuePackets()
 				// disallow player map changes while we sort out packets!
 				std::lock_guard<std::mutex> lock( mPlayerMapMutex );
 
-				auto player = mPlayerMap.find(packet->playerId);
-				// delete the disconnectiong player
+				auto player = mPlayerMap.find(packet->playerId);				
 				if( player != mPlayerMap.end() && player->second->getGame() )
 				{
 					player->second->getGame() ->injectPacket( packet );
@@ -167,7 +166,7 @@ void DedicatedServer::processPackets()
 				mConnectedClients--;
 
 				auto player = mPlayerMap.find(packet->playerId);
-				// delete the disconnectiong player
+				// delete the disconnecting player
 				if( player != mPlayerMap.end() )
 				{
 					syslog(LOG_DEBUG, "Disconnected player %s", player->second->getName().c_str());
@@ -287,6 +286,7 @@ int DedicatedServer::getActiveGamesCount() const
 
 int DedicatedServer::getWaitingPlayers() const
 {
+	//todo change alg
 	return mPlayerMap.size() - 2 * mGameList.size();
 }
 
@@ -375,6 +375,7 @@ void DedicatedServer::processBlobbyServerPresent( const packet_ptr& packet)
 	else
 	{
 		mServerInfo.activegames = mGameList.size();
+		//todo alg
 		mServerInfo.waitingplayers = mPlayerMap.size() - 2 * mServerInfo.activegames;
 
 		stream2.Write((unsigned char)ID_BLOBBY_SERVER_PRESENT);
