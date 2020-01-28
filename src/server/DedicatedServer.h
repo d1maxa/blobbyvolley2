@@ -75,7 +75,7 @@ class DedicatedServer
 
 
 		// server settings
-		void allowNewPlayers( bool allow );
+		void allowNewPlayers(bool allow, int max_clients);
 
 	private:
 		// packet handling functions / utility functions

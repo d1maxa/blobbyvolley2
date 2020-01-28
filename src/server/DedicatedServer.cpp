@@ -286,8 +286,17 @@ int DedicatedServer::getActiveGamesCount() const
 
 int DedicatedServer::getWaitingPlayers() const
 {
-	//todo change alg
-	return mPlayerMap.size() - 2 * mGameList.size();
+	auto count = mPlayerMap.size();
+	if (count == 0)
+		return 0;
+	
+	for (auto it = mPlayerMap.begin(); it != mPlayerMap.end(); ++it)
+	{
+		if (it->second->getGame())
+			count--;
+	}	
+
+	return count;
 }
 
 const ServerInfo& DedicatedServer::getServerInfo() const
@@ -300,9 +309,10 @@ int DedicatedServer::getConnectedClients() const
 	return mConnectedClients;
 }
 
-void DedicatedServer::allowNewPlayers( bool allow )
+void DedicatedServer::allowNewPlayers(bool allow, int max_clients)
 {
 	mAcceptNewPlayers = allow;
+	mServer->SetAllowedPlayers(allow ? max_clients : 0);
 }
 
 // debug
@@ -374,9 +384,8 @@ void DedicatedServer::processBlobbyServerPresent( const packet_ptr& packet)
 	}
 	else
 	{
-		mServerInfo.activegames = mGameList.size();
-		//todo alg
-		mServerInfo.waitingplayers = mPlayerMap.size() - 2 * mServerInfo.activegames;
+		mServerInfo.activegames = mGameList.size();		
+		mServerInfo.waitingplayers = getWaitingPlayers();
 
 		stream2.Write((unsigned char)ID_BLOBBY_SERVER_PRESENT);
 		mServerInfo.writeToBitstream(stream2);
