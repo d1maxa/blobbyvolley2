@@ -592,7 +592,9 @@ void GraphicOptionsPlusState::step_impl()
 	imgui.doCursor();
 	imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
 	imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
-		
+
+	auto tmanager = TextManager::getSingleton();
+	
 	float heightOfElement = 10.0;
 
 #if __MOBILE__
@@ -610,7 +612,7 @@ void GraphicOptionsPlusState::step_impl()
 	float playerColorSettingsHeight = heightOfElement;
 
 	//left blob:
-	imgui.doText(GEN_ID, Vector2(34.0, heightOfElement), TextManager::OP_LEFT_PLAYER_2);
+	imgui.doText(GEN_ID, Vector2(34.0, heightOfElement), tmanager->getString(TextManager::OP_LEFT_PLAYER) + " 2");
 
 	heightOfElement += standardLineHeight;
 
@@ -661,7 +663,7 @@ void GraphicOptionsPlusState::step_impl()
 	//right blob:
 	heightOfElement = playerColorSettingsHeight;
 
-	imgui.doText(GEN_ID, Vector2(434.0, heightOfElement), TextManager::OP_RIGHT_PLAYER_2);
+	imgui.doText(GEN_ID, Vector2(434.0, heightOfElement), tmanager->getString(TextManager::OP_RIGHT_PLAYER) + " 2");
 
 	heightOfElement += standardLineHeight;
 
@@ -922,30 +924,20 @@ void InputOptionsState::step_impl()
 void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastActionKey, int& mouse, std::string keyboard[], std::string joystick[])
 {
 	IMGUI& imgui = IMGUI::getSingleton();
+	auto tmanager = TextManager::getSingleton();
 		
 	std::string& device = (player % 2) ? mRightDevice : mLeftDevice;
 	int base_x = (player % 2) ? 400 : 0;
 
-	TextManager::STRING p_str;
-	
-	switch (player)
-	{
-	case LEFT_PLAYER:
-		p_str = TextManager::OP_LEFT_PLAYER;		
-		break;
+	std::string p_str;
 
-	case RIGHT_PLAYER:
-		p_str = TextManager::OP_RIGHT_PLAYER;		
-		break;
+	if (player % 2)
+		p_str = tmanager->getString(TextManager::OP_RIGHT_PLAYER);
+	else
+		p_str = tmanager->getString(TextManager::OP_LEFT_PLAYER);
 
-	case LEFT_PLAYER_2:
-		p_str = TextManager::OP_LEFT_PLAYER_2;		
-		break;
-
-	case RIGHT_PLAYER_2:
-		p_str = TextManager::OP_RIGHT_PLAYER_2;		
-		break;
-	}
+	if (player > RIGHT_PLAYER)
+		p_str += " " + std::to_string(player / 2 + 1);
 		
 	imgui.doText(GEN_ID, Vector2(base_x + 34.0, 10.0), p_str);
 

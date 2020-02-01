@@ -90,19 +90,7 @@ PlayerInputAbs TouchInputDevice::transferInput()
 				continue;
 
 			// Check the playerside
-			if (mPlayer == LEFT_PLAYER)
-			{
-				// If finger has a valid blobby position, take it!
-				if (finger->x < 0.6) {
-					mTouchXPos = 200 + finger->x * 800;
-				}
-
-				// If finger has a valid jump position
-				if (finger->x > 0.7) {
-					input.setJump( true );
-				}
-			}
-			else
+			if (mPlayer % 2)
 			{
 				// If finger has a valid blobby position, take it!
 				if (finger->x > 0.4) {
@@ -114,9 +102,21 @@ PlayerInputAbs TouchInputDevice::transferInput()
 					input.setJump( true );
 				}
 			}
+			else
+			{
+				// If finger has a valid blobby position, take it!
+				if (finger->x < 0.6) {
+					mTouchXPos = 200 + finger->x * 800;
+				}
+
+				// If finger has a valid jump position
+				if (finger->x > 0.7) {
+					input.setJump( true );
+				}
+			}
 		}
 
-		const int playerOffset = mPlayer == RIGHT_PLAYER ? 200 : -200;
+		const int playerOffset = mPlayer % 2 ? 200 : -200;
 		mTouchXPos = mTouchXPos < 201 ? 201 : mTouchXPos;
 		mTouchXPos = mTouchXPos > 600 ? 600 : mTouchXPos;
 
@@ -141,27 +141,7 @@ PlayerInputAbs TouchInputDevice::transferInput()
 				continue;
 
 			// Check the playerside
-			if (mPlayer == LEFT_PLAYER)
-			{
-				// If finger is on the playerside
-				if (finger->x < 0.5) {
-					// Left arrow
-					if (finger->x < 0.25)
-					{
-						input.setLeft(true);
-					}
-					else
-					{
-						input.setRight(true);
-					}
-				}
-
-				// If finger has a valid jump position
-				if (finger->x > 0.7) {
-					input.setJump(true);
-				}
-			}
-			else
+			if (mPlayer % 2)
 			{
 				// If finger is on the playerside
 				if (finger->x > 0.5) {
@@ -179,6 +159,26 @@ PlayerInputAbs TouchInputDevice::transferInput()
 				// If finger has a valid jump position
 				if (finger->x < 0.3) {
 					input.setJump( true );
+				}
+			}
+			else
+			{
+				// If finger is on the playerside
+				if (finger->x < 0.5) {
+					// Left arrow
+					if (finger->x < 0.25)
+					{
+						input.setLeft(true);
+					}
+					else
+					{
+						input.setRight(true);
+					}
+				}
+
+				// If finger has a valid jump position
+				if (finger->x > 0.7) {
+					input.setJump(true);
 				}
 			}
 		}

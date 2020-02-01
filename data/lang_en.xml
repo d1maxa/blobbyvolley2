@@ -114,5 +114,16 @@
 	<string english = "strong" translation = "strong" />
 	<string english = "rules:" translation = "rules:" />
 	
+	<string english = "input options+" translation = "input options+" />
+	<string english = "graphic opts+" translation = "graphic opts+" />
+	<string english = "player opts+" translation = "player opts+" />
+	<string english = "change team" translation = "change team" />
+	<string english = "one team is empty" translation = "one team is empty" />
+	<string english = "too many players in one team" translation = "too many players in one team" />
+	<string english = "first team" translation = "first team" />
+	<string english = "second team" translation = "second team" />
+	<string english = "paused the game" translation = "paused the game" />
+	<string english = "is waiting for continue" translation = "is waiting for continue" />
+	
 	<string english = "please visit http://blobby.sourceforge.net/ for a new version of blobby volley" translation = "please visit http://blobby.sourceforge.net/ for a new version of blobby volley" />
 </language>

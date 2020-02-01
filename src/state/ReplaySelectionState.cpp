@@ -123,6 +123,7 @@ void ReplaySelectionState::step_impl()
 
 	if(mShowReplayInfo)
 	{
+		//todo check player enabled
 		// setup
 		std::string left =  mReplayLoader->getPlayerName(LEFT_PLAYER);
 		std::string right =  mReplayLoader->getPlayerName(RIGHT_PLAYER);

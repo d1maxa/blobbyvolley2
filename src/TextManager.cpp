@@ -250,9 +250,7 @@ void TextManager::setDefault()
 	mStrings[OP_SHOW_SHADOW] = "show shadow";
 	mStrings[OP_BLOB_COLORS] = "blob colors";
 	mStrings[OP_LEFT_PLAYER] = "left player";
-	mStrings[OP_RIGHT_PLAYER] = "right player";
-	mStrings[OP_LEFT_PLAYER_2] = "left player 2";
-	mStrings[OP_RIGHT_PLAYER_2] = "right player 2";
+	mStrings[OP_RIGHT_PLAYER] = "right player";	
 	mStrings[OP_RED] = "red";
 	mStrings[OP_GREEN] = "green";
 	mStrings[OP_BLUE] = "blue";
