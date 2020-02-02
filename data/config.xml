@@ -50,5 +50,37 @@
 	<var name="right_2_script_strength" value="25"/>
 	<var name="additional_network_server" value="0.0.0.0"/>
 	<var name="rules" value="one_hit_per_blob.lua"/>
+	<var name="left_3_blobby_color_r" value="128"/>
+	<var name="left_3_blobby_color_g" value="255"/>
+	<var name="left_3_blobby_color_b" value="0"/>
+	<var name="left_3_blobby_oscillate" value="false"/>
+	<var name="right_3_blobby_color_r" value="128"/>
+	<var name="right_3_blobby_color_g" value="255"/>
+	<var name="right_3_blobby_color_b" value="255"/>
+	<var name="right_3_blobby_oscillate" value="false"/>
+	<var name="left_3_script_name" value="reduced"/>
+	<var name="left_3_player_human" value="true"/>
+	<var name="left_3_player_enabled" value="false"/>
+	<var name="left_3_player_name" value="Left Player 3"/>
+	<var name="right_3_script_name" value="reduced"/>
+	<var name="right_3_player_human" value="true"/>
+	<var name="right_3_player_enabled" value="false"/>
+	<var name="right_3_player_name" value="Right Player 3"/>
+	<var name="left_4_blobby_color_r" value="128"/>
+	<var name="left_4_blobby_color_g" value="255"/>
+	<var name="left_4_blobby_color_b" value="128"/>
+	<var name="left_4_blobby_oscillate" value="false"/>
+	<var name="right_4_blobby_color_r" value="128"/>
+	<var name="right_4_blobby_color_g" value="128"/>
+	<var name="right_4_blobby_color_b" value="128"/>
+	<var name="right_4_blobby_oscillate" value="false"/>
+	<var name="left_4_script_name" value="reduced"/>
+	<var name="left_4_player_human" value="true"/>
+	<var name="left_4_player_enabled" value="false"/>
+	<var name="left_4_player_name" value="Left Player 4"/>
+	<var name="right_4_script_name" value="reduced"/>
+	<var name="right_4_player_human" value="true"/>
+	<var name="right_4_player_enabled" value="false"/>
+	<var name="right_4_player_name" value="Right Player 4"/>
 </userconfig>
 

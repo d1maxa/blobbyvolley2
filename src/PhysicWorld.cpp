@@ -319,14 +319,15 @@ bool PhysicWorld::handleBlobbiesCollision(PlayerSide player, PlayerSide player2)
 	mBallVelocity = -Vector2(mBallPosition, circlepos);
 	mBallVelocity = mBallVelocity.normalise();
 	mBallVelocity = mBallVelocity.scale(BALL_COLLISION_VELOCITY);
-	mBallPosition += mBallVelocity;	*/
+	mBallPosition += mBallVelocity;	*/	
+	
 	mBlobVelocity[player2] = -Vector2(mBlobPosition[player2], mBlobPosition[player]);
 	mBlobVelocity[player2] = mBlobVelocity[player2].normalise();
-	mBlobVelocity[player2] = mBlobVelocity[player2].scale(BALL_COLLISION_VELOCITY);	
+	mBlobVelocity[player2] = mBlobVelocity[player2].scale(BLOBBY_COLLISION_VELOCITY);
 		
 	mBlobVelocity[player] = -Vector2(mBlobPosition[player], mBlobPosition[player2]);
 	mBlobVelocity[player] = mBlobVelocity[player].normalise();
-	mBlobVelocity[player] = mBlobVelocity[player].scale(BALL_COLLISION_VELOCITY);
+	mBlobVelocity[player] = mBlobVelocity[player].scale(BLOBBY_COLLISION_VELOCITY);
 
 	mBlobPosition[player2] += mBlobVelocity[player2];
 	mBlobPosition[player] += mBlobVelocity[player];

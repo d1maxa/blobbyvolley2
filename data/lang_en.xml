@@ -114,9 +114,9 @@
 	<string english = "strong" translation = "strong" />
 	<string english = "rules:" translation = "rules:" />
 	
-	<string english = "input options+" translation = "input options+" />
-	<string english = "graphic opts+" translation = "graphic opts+" />
-	<string english = "player opts+" translation = "player opts+" />
+	<string english = "input options+" translation = "input" />
+	<string english = "graphic opts+" translation = "graphic" />
+	<string english = "player opts+" translation = "player" />
 	<string english = "change team" translation = "change team" />
 	<string english = "one team is empty" translation = "one team is empty" />
 	<string english = "too many players in one team" translation = "too many players in one team" />

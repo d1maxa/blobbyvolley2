@@ -238,11 +238,11 @@ void TextManager::setDefault()
 	mStrings[OP_TOUCH_ARROWS] = "arrow keys";
 	mStrings[OP_TOUCH_DIRECT] = "blobby follows finger";
 	mStrings[OP_INPUT_OP] = "input options";
-	mStrings[OP_INPUT_OP_PLUS] = "input options+";
+	mStrings[OP_INPUT_OP_PLUS] = "input";
 	mStrings[OP_GFX_OP] = "graphic options";
-	mStrings[OP_GFX_OP_PLUS] = "graphic opts+";
+	mStrings[OP_GFX_OP_PLUS] = "graphic";
 	mStrings[OP_MISC] = "misc options";
-	mStrings[OP_PLUS] = "player opts+";
+	mStrings[OP_PLUS] = "player";
 	mStrings[OP_VIDEO] = "video settings";
 	mStrings[OP_FULLSCREEN] = "fullscreen mode";
 	mStrings[OP_WINDOW] = "window mode";

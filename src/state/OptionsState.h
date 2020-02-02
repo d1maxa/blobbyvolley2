@@ -43,10 +43,10 @@ private:
 
 	UserConfig mOptionConfig;
 	std::vector<std::string> mScriptNames;
-	unsigned mPlayerOptions[MAX_PLAYERS];
-	std::string mPlayerName[MAX_PLAYERS];
-	unsigned mPlayerNamePosition[MAX_PLAYERS];
-	unsigned mBotStrength[MAX_PLAYERS];
+	unsigned mPlayerOptions[NUM_SIDES];
+	std::string mPlayerName[NUM_SIDES];
+	unsigned mPlayerNamePosition[NUM_SIDES];
+	unsigned mBotStrength[NUM_SIDES];
 };
 
 /*! \class OptionPlusState
@@ -55,7 +55,7 @@ private:
 class OptionPlusState : public State
 {
 public:
-	OptionPlusState(std::vector<std::string> scriptNames);
+	OptionPlusState(std::vector<std::string> scriptNames, int pairNum);
 	virtual ~OptionPlusState();
 	virtual void step_impl();
 	virtual const char* getStateName() const;
@@ -64,13 +64,14 @@ private:
 	/// writes current settings to disk
 	void save();
 
+	int mPairNum;
 	UserConfig mOptionConfig;
 	std::vector<std::string> mScriptNames;
-	bool mPlayerEnabled[MAX_PLAYERS];
-	unsigned mPlayerOptions[MAX_PLAYERS];
-	std::string mPlayerName[MAX_PLAYERS];
-	unsigned mPlayerNamePosition[MAX_PLAYERS];
-	unsigned mBotStrength[MAX_PLAYERS];	
+	bool mPlayerEnabled[NUM_SIDES];
+	unsigned mPlayerOptions[NUM_SIDES];
+	std::string mPlayerName[NUM_SIDES];
+	unsigned mPlayerNamePosition[NUM_SIDES];
+	unsigned mBotStrength[NUM_SIDES];	
 };
 
 /*! \class GraphicOptionsState
@@ -101,14 +102,14 @@ private:
 class GraphicOptionsPlusState : public State
 {
 public:
-	GraphicOptionsPlusState();
+	GraphicOptionsPlusState(int pairNum);
 	virtual ~GraphicOptionsPlusState();
 	virtual void step_impl();
 	virtual const char* getStateName() const;
 private:
 	/// writes current settings to disk
 	void save();
-
+	int mPairNum;
 	UserConfig mOptionConfig;	
 	int mR1, mG1, mB1, mR2, mG2, mB2;
 	bool mLeftMorphing, mRightMorphing;	
@@ -120,7 +121,7 @@ private:
 class InputOptionsState : public State
 {
 public:
-	InputOptionsState(bool primary);
+	InputOptionsState(int pairNum);
 	virtual ~InputOptionsState();	
 	virtual void step_impl();
 	virtual const char* getStateName() const;
@@ -138,7 +139,8 @@ private:
 	/// writes current settings to disk
 	void save();
 
-	bool mPrimary;
+	int mPairNum;
+	bool mCanChooseMouse;
 	UserConfig mOptionConfig;
 	std::string oldString;
 	int mOldInteger;
@@ -158,10 +160,7 @@ private:
 	float mRightMouseSensitivity;
 	std::string mRightKeyboard[IA_COUNT];
 	std::string mRightJoystick[IA_COUNT];
-
-	std::string mLeft2Device;
-	std::string mRight2Device;
-
+		
 	//global data:
 	int mBlobbyTouchType;
 
@@ -178,6 +177,14 @@ private:
 	void getInputPrompt(TextManager::STRING prompt, TextManager::STRING input);
 	// returns the correct text manager string for the device string
 	TextManager::STRING getDeviceName(const std::string& device) const;
+
+	inline std::string getPairPrefix() const
+	{
+		std::string prefix;
+		if (mPairNum > 1)
+			prefix = "_" + std::to_string(mPairNum);
+		return prefix;
+	}
 };
 
 /*! \class MiscOptionsState

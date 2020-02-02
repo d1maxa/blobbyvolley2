@@ -109,6 +109,7 @@ void OptionState::step_impl()
 {
 	const int MAX_BOT_DELAY = 25;		// 25 frames = 0.33s (gamespeed: normal)
 
+	auto tmanager = TextManager::getSingleton();
 	IMGUI& imgui = IMGUI::getSingleton();
 	imgui.doCursor();
 	imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
@@ -139,13 +140,23 @@ void OptionState::step_impl()
 	if (imgui.doButton(GEN_ID, Vector2(40.0, 390.0), TextManager::OP_INPUT_OP))
 	{
 		save();
-		switchState(new InputOptionsState(true));
+		switchState(new InputOptionsState(1));
 	}
 	
-	if (imgui.doButton(GEN_ID, Vector2(440.0, 390.0), TextManager::OP_INPUT_OP_PLUS))
+	if (imgui.doButton(GEN_ID, Vector2(440.0, 390.0), tmanager->getString(TextManager::OP_INPUT_OP_PLUS) + " 2"))
 	{
 		save();
-		switchState(new InputOptionsState(false));
+		switchState(new InputOptionsState(2));
+	}
+	if (imgui.doButton(GEN_ID, Vector2(640.0, 390.0), "3"))
+	{
+		save();
+		switchState(new InputOptionsState(3));
+	}
+	if (imgui.doButton(GEN_ID, Vector2(700.0, 390.0), "4"))
+	{
+		save();
+		switchState(new InputOptionsState(4));
 	}
 
 	if (imgui.doButton(GEN_ID, Vector2(40.0, 430.0), TextManager::OP_GFX_OP))
@@ -153,20 +164,43 @@ void OptionState::step_impl()
 		save();
 		switchState(new GraphicOptionsState());
 	}
-	if (imgui.doButton(GEN_ID, Vector2(440.0, 430.0), TextManager::OP_GFX_OP_PLUS))
+
+	if (imgui.doButton(GEN_ID, Vector2(440.0, 430.0), tmanager->getString(TextManager::OP_GFX_OP_PLUS) + " 2"))
 	{
 		save();
-		switchState(new GraphicOptionsPlusState());
+		switchState(new GraphicOptionsPlusState(2));
 	}
+	if (imgui.doButton(GEN_ID, Vector2(690.0, 430.0), "3"))
+	{
+		save();
+		switchState(new GraphicOptionsPlusState(3));
+	}
+	if (imgui.doButton(GEN_ID, Vector2(750.0, 430.0), "4"))
+	{
+		save();
+		switchState(new GraphicOptionsPlusState(4));
+	}
+
 	if (imgui.doButton(GEN_ID, Vector2(40.0, 470.0), TextManager::OP_MISC))
 	{
 		save();
 		switchState(new MiscOptionsState());
 	}
-	if (imgui.doButton(GEN_ID, Vector2(440.0, 470.0), TextManager::OP_PLUS))
+
+	if (imgui.doButton(GEN_ID, Vector2(440.0, 470.0), tmanager->getString(TextManager::OP_PLUS) + " 2"))
 	{
 		save();
-		switchState(new OptionPlusState(mScriptNames));
+		switchState(new OptionPlusState(mScriptNames, 2));
+	}
+	if (imgui.doButton(GEN_ID, Vector2(670.0, 470.0), "3"))
+	{
+		save();
+		switchState(new OptionPlusState(mScriptNames, 3));
+	}
+	if (imgui.doButton(GEN_ID, Vector2(730.0, 470.0), "4"))
+	{
+		save();
+		switchState(new OptionPlusState(mScriptNames, 4));
 	}
 
 	if (imgui.doButton(GEN_ID, Vector2(224.0, 530.0), TextManager::LBL_OK))
@@ -185,45 +219,40 @@ const char* OptionState::getStateName() const
 	return "OptionState";
 }
 
-OptionPlusState::OptionPlusState(std::vector<std::string> scriptNames)
-	:mScriptNames(scriptNames)
+OptionPlusState::OptionPlusState(std::vector<std::string> scriptNames, int pairNum):
+	mScriptNames(scriptNames),
+	mPairNum(pairNum)
 {
 	mOptionConfig.loadFile("config.xml");
-	mPlayerOptions[LEFT_PLAYER_2] = 0;
-	mPlayerOptions[RIGHT_PLAYER_2] = 0;
-	std::string leftScript = mOptionConfig.getString("left_2_script_name");
-	std::string rightScript = mOptionConfig.getString("right_2_script_name");	
-
-	/*
-	mScriptNames = FileSystem::getSingleton().enumerateFiles("scripts", ".lua");
-	// hack. we cant use something like push_front, though
-	mScriptNames.push_back("Human");
-	std::swap(mScriptNames[0], mScriptNames[mScriptNames.size() - 1]);
-	*/	
-
+	mPlayerOptions[LEFT_PLAYER] = 0;
+	mPlayerOptions[RIGHT_PLAYER] = 0;
+	auto prefix = std::to_string(mPairNum);
+	std::string leftScript = mOptionConfig.getString("left_" + prefix + "_script_name");
+	std::string rightScript = mOptionConfig.getString("right_" + prefix + "_script_name");	
+	
 	for (unsigned int i = 0; i < mScriptNames.size(); ++i)
 	{
 		if (mScriptNames[i] == leftScript)
-			mPlayerOptions[LEFT_PLAYER_2] = i;
+			mPlayerOptions[LEFT_PLAYER] = i;
 		if (mScriptNames[i] == rightScript)
-			mPlayerOptions[RIGHT_PLAYER_2] = i;
+			mPlayerOptions[RIGHT_PLAYER] = i;
 	}
 	
-	if (mOptionConfig.getBool("left_2_player_human"))
-		mPlayerOptions[LEFT_PLAYER_2] = 0;
-	if (mOptionConfig.getBool("right_2_player_human"))
-		mPlayerOptions[RIGHT_PLAYER_2] = 0;
+	if (mOptionConfig.getBool("left_" + prefix + "_player_human"))
+		mPlayerOptions[LEFT_PLAYER] = 0;
+	if (mOptionConfig.getBool("right_" + prefix + "_player_human"))
+		mPlayerOptions[RIGHT_PLAYER] = 0;
 
-	mPlayerName[LEFT_PLAYER_2] = mOptionConfig.getString("left_2_player_name");
-	mPlayerName[RIGHT_PLAYER_2] = mOptionConfig.getString("right_2_player_name");
-	mPlayerNamePosition[LEFT_PLAYER_2] = 0;
-	mPlayerNamePosition[RIGHT_PLAYER_2] = 0;	
+	mPlayerName[LEFT_PLAYER] = mOptionConfig.getString("left_" + prefix + "_player_name");
+	mPlayerName[RIGHT_PLAYER] = mOptionConfig.getString("right_" + prefix + "_player_name");
+	mPlayerNamePosition[LEFT_PLAYER] = 0;
+	mPlayerNamePosition[RIGHT_PLAYER] = 0;	
 
-	mBotStrength[LEFT_PLAYER_2] = mOptionConfig.getInteger("left_2_script_strength");
-	mBotStrength[RIGHT_PLAYER_2] = mOptionConfig.getInteger("right_2_script_strength");
+	mBotStrength[LEFT_PLAYER] = mOptionConfig.getInteger("left_" + prefix + "_script_strength");
+	mBotStrength[RIGHT_PLAYER] = mOptionConfig.getInteger("right_" + prefix + "_script_strength");
 
-	mPlayerEnabled[LEFT_PLAYER_2] = mOptionConfig.getBool("left_2_player_enabled");
-	mPlayerEnabled[RIGHT_PLAYER_2] = mOptionConfig.getBool("right_2_player_enabled");
+	mPlayerEnabled[LEFT_PLAYER] = mOptionConfig.getBool("left_" + prefix + "_player_enabled");
+	mPlayerEnabled[RIGHT_PLAYER] = mOptionConfig.getBool("right_" + prefix + "_player_enabled");
 }
 
 OptionPlusState::~OptionPlusState()
@@ -232,32 +261,33 @@ OptionPlusState::~OptionPlusState()
 
 void OptionPlusState::save()
 {
-	if (mPlayerOptions[LEFT_PLAYER_2] == 0)
+	auto prefix = std::to_string(mPairNum);
+	if (mPlayerOptions[LEFT_PLAYER] == 0)
 	{
-		mOptionConfig.setBool("left_2_player_human", true);
+		mOptionConfig.setBool("left_" + prefix + "_player_human", true);
 	}
 	else
 	{
-		mOptionConfig.setBool("left_2_player_human", false);
-		mOptionConfig.setString("left_2_script_name", mScriptNames[mPlayerOptions[LEFT_PLAYER_2]]);
+		mOptionConfig.setBool("left_" + prefix + "_player_human", false);
+		mOptionConfig.setString("left_" + prefix + "_script_name", mScriptNames[mPlayerOptions[LEFT_PLAYER]]);
 	}
 
-	if (mPlayerOptions[RIGHT_PLAYER_2] == 0)
+	if (mPlayerOptions[RIGHT_PLAYER] == 0)
 	{
-		mOptionConfig.setBool("right_2_player_human", true);
+		mOptionConfig.setBool("right_" + prefix + "_player_human", true);
 	}
 	else
 	{
-		mOptionConfig.setBool("right_2_player_human", false);
-		mOptionConfig.setString("right_2_script_name", mScriptNames[mPlayerOptions[RIGHT_PLAYER_2]]);
+		mOptionConfig.setBool("right_" + prefix + "_player_human", false);
+		mOptionConfig.setString("right_" + prefix + "_script_name", mScriptNames[mPlayerOptions[RIGHT_PLAYER]]);
 	}
-	mOptionConfig.setString("left_2_player_name", mPlayerName[LEFT_PLAYER_2]);
-	mOptionConfig.setString("right_2_player_name", mPlayerName[RIGHT_PLAYER_2]);
-	mOptionConfig.setInteger("left_2_script_strength", mBotStrength[LEFT_PLAYER_2]);
-	mOptionConfig.setInteger("right_2_script_strength", mBotStrength[RIGHT_PLAYER_2]);
+	mOptionConfig.setString("left_" + prefix + "_player_name", mPlayerName[LEFT_PLAYER]);
+	mOptionConfig.setString("right_" + prefix + "_player_name", mPlayerName[RIGHT_PLAYER]);
+	mOptionConfig.setInteger("left_" + prefix + "_script_strength", mBotStrength[LEFT_PLAYER]);
+	mOptionConfig.setInteger("right_" + prefix + "_script_strength", mBotStrength[RIGHT_PLAYER]);
 
-	mOptionConfig.setBool("left_2_player_enabled", mPlayerEnabled[LEFT_PLAYER_2]);
-	mOptionConfig.setBool("right_2_player_enabled", mPlayerEnabled[RIGHT_PLAYER_2]);	
+	mOptionConfig.setBool("left_" + prefix + "_player_enabled", mPlayerEnabled[LEFT_PLAYER]);
+	mOptionConfig.setBool("right_" + prefix + "_player_enabled", mPlayerEnabled[RIGHT_PLAYER]);	
 
 	mOptionConfig.saveFile("config.xml");
 }
@@ -271,44 +301,44 @@ void OptionPlusState::step_impl()
 	imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
 	imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
 
-	imgui.doEditbox(GEN_ID, Vector2(5.0, 10.0), 15, mPlayerName[LEFT_PLAYER_2], mPlayerNamePosition[LEFT_PLAYER_2]);
-	imgui.doEditbox(GEN_ID, Vector2(425.0, 10.0), 15, mPlayerName[RIGHT_PLAYER_2], mPlayerNamePosition[RIGHT_PLAYER_2]);
+	imgui.doEditbox(GEN_ID, Vector2(5.0, 10.0), 15, mPlayerName[LEFT_PLAYER], mPlayerNamePosition[LEFT_PLAYER]);
+	imgui.doEditbox(GEN_ID, Vector2(425.0, 10.0), 15, mPlayerName[RIGHT_PLAYER], mPlayerNamePosition[RIGHT_PLAYER]);
 
-	imgui.doSelectbox(GEN_ID, Vector2(5.0, 50.0), Vector2(375.0, 300.0), mScriptNames, mPlayerOptions[LEFT_PLAYER_2]);
-	imgui.doSelectbox(GEN_ID, Vector2(425.0, 50.0), Vector2(795.0, 300.0), mScriptNames, mPlayerOptions[RIGHT_PLAYER_2]);
+	imgui.doSelectbox(GEN_ID, Vector2(5.0, 50.0), Vector2(375.0, 300.0), mScriptNames, mPlayerOptions[LEFT_PLAYER]);
+	imgui.doSelectbox(GEN_ID, Vector2(425.0, 50.0), Vector2(795.0, 300.0), mScriptNames, mPlayerOptions[RIGHT_PLAYER]);
 
 	imgui.doText(GEN_ID, Vector2(270.0, 310.0), TextManager::OP_DIFFICULTY);
 
-	float f = 1.f - (float)mBotStrength[0] / MAX_BOT_DELAY;
+	float f = 1.f - (float)mBotStrength[LEFT_PLAYER] / MAX_BOT_DELAY;
 	imgui.doScrollbar(GEN_ID, Vector2(15.0, 350.0), f);
-	mBotStrength[LEFT_PLAYER_2] = static_cast<unsigned int> ((1.f - f) * MAX_BOT_DELAY + 0.5f);
+	mBotStrength[LEFT_PLAYER] = static_cast<unsigned int> ((1.f - f) * MAX_BOT_DELAY + 0.5f);
 	imgui.doText(GEN_ID, Vector2(235.0, 350.0), f > 0.66 ? TextManager::OP_STRONG :
 		(f > 0.33 ? TextManager::OP_MEDIUM :
 			TextManager::OP_WEAK));
 
-	f = 1.f - (float)mBotStrength[1] / MAX_BOT_DELAY;
+	f = 1.f - (float)mBotStrength[RIGHT_PLAYER] / MAX_BOT_DELAY;
 	imgui.doScrollbar(GEN_ID, Vector2(440.0, 350.0), f);
-	mBotStrength[RIGHT_PLAYER_2] = static_cast<unsigned int> ((1.f - f) * MAX_BOT_DELAY + 0.5f);
+	mBotStrength[RIGHT_PLAYER] = static_cast<unsigned int> ((1.f - f) * MAX_BOT_DELAY + 0.5f);
 	imgui.doText(GEN_ID, Vector2(660.0, 350.0), f > 0.66 ? TextManager::OP_STRONG :
 		(f > 0.33 ? TextManager::OP_MEDIUM :
 			TextManager::OP_WEAK));
 
 	imgui.doText(GEN_ID, Vector2(34.0, 390), TextManager::OP_ENABLED);
 	if (imgui.doButton(GEN_ID, Vector2(72.0, 420), TextManager::LBL_YES))
-		mPlayerEnabled[LEFT_PLAYER_2] = true;
+		mPlayerEnabled[LEFT_PLAYER] = true;
 	if (imgui.doButton(GEN_ID, Vector2(220.0, 420), TextManager::LBL_NO))
-		mPlayerEnabled[LEFT_PLAYER_2] = false;
-	if (mPlayerEnabled[LEFT_PLAYER_2])
+		mPlayerEnabled[LEFT_PLAYER] = false;
+	if (mPlayerEnabled[LEFT_PLAYER])
 		imgui.doImage(GEN_ID, Vector2(54.0, 432.0), "gfx/pfeil_rechts.bmp");
 	else
 		imgui.doImage(GEN_ID, Vector2(204.0, 432.0), "gfx/pfeil_rechts.bmp");	
 
 	imgui.doText(GEN_ID, Vector2(434.0, 390), TextManager::OP_ENABLED);
 	if (imgui.doButton(GEN_ID, Vector2(472.0, 420), TextManager::LBL_YES))
-		mPlayerEnabled[RIGHT_PLAYER_2] = true;
+		mPlayerEnabled[RIGHT_PLAYER] = true;
 	if (imgui.doButton(GEN_ID, Vector2(620.0, 420), TextManager::LBL_NO))
-		mPlayerEnabled[RIGHT_PLAYER_2] = false;
-	if (mPlayerEnabled[RIGHT_PLAYER_2])
+		mPlayerEnabled[RIGHT_PLAYER] = false;
+	if (mPlayerEnabled[RIGHT_PLAYER])
 		imgui.doImage(GEN_ID, Vector2(454.0, 432.0), "gfx/pfeil_rechts.bmp");
 	else
 		imgui.doImage(GEN_ID, Vector2(604.0, 432.0), "gfx/pfeil_rechts.bmp");
@@ -326,7 +356,7 @@ void OptionPlusState::step_impl()
 
 const char* OptionPlusState::getStateName() const
 {
-	return "OptionPlusState";
+	return ("OptionPlusState_" + std::to_string(mPairNum)).c_str();
 }
 
 GraphicOptionsState::GraphicOptionsState()
@@ -555,17 +585,19 @@ const char* GraphicOptionsState::getStateName() const
 	return "GraphicOptionsState";
 }
 
-GraphicOptionsPlusState::GraphicOptionsPlusState()
+GraphicOptionsPlusState::GraphicOptionsPlusState(int pairNum):
+mPairNum(pairNum)	
 {
-	mOptionConfig.loadFile("config.xml");	
-	mR1 = mOptionConfig.getInteger("left_2_blobby_color_r");
-	mG1 = mOptionConfig.getInteger("left_2_blobby_color_g");
-	mB1 = mOptionConfig.getInteger("left_2_blobby_color_b");
-	mR2 = mOptionConfig.getInteger("right_2_blobby_color_r");
-	mG2 = mOptionConfig.getInteger("right_2_blobby_color_g");
-	mB2 = mOptionConfig.getInteger("right_2_blobby_color_b");
-	mLeftMorphing = mOptionConfig.getBool("left_2_blobby_oscillate");
-	mRightMorphing = mOptionConfig.getBool("right_2_blobby_oscillate");	
+	mOptionConfig.loadFile("config.xml");
+	auto prefix = std::to_string(mPairNum);
+	mR1 = mOptionConfig.getInteger("left_" + prefix + "_blobby_color_r");
+	mG1 = mOptionConfig.getInteger("left_" + prefix + "_blobby_color_g");
+	mB1 = mOptionConfig.getInteger("left_" + prefix + "_blobby_color_b");
+	mR2 = mOptionConfig.getInteger("right_" + prefix + "_blobby_color_r");
+	mG2 = mOptionConfig.getInteger("right_" + prefix + "_blobby_color_g");
+	mB2 = mOptionConfig.getInteger("right_" + prefix + "_blobby_color_b");
+	mLeftMorphing = mOptionConfig.getBool("left_" + prefix + "_blobby_oscillate");
+	mRightMorphing = mOptionConfig.getBool("right_" + prefix + "_blobby_oscillate");
 }
 
 GraphicOptionsPlusState::~GraphicOptionsPlusState()
@@ -574,14 +606,15 @@ GraphicOptionsPlusState::~GraphicOptionsPlusState()
 
 void GraphicOptionsPlusState::save()
 {
-	mOptionConfig.setInteger("left_2_blobby_color_r", mR1);
-	mOptionConfig.setInteger("left_2_blobby_color_g", mG1);
-	mOptionConfig.setInteger("left_2_blobby_color_b", mB1);
-	mOptionConfig.setInteger("right_2_blobby_color_r", mR2);
-	mOptionConfig.setInteger("right_2_blobby_color_g", mG2);
-	mOptionConfig.setInteger("right_2_blobby_color_b", mB2);
-	mOptionConfig.setBool("left_2_blobby_oscillate", mLeftMorphing);
-	mOptionConfig.setBool("right_2_blobby_oscillate", mRightMorphing);
+	auto prefix = std::to_string(mPairNum);
+	mOptionConfig.setInteger("left_" + prefix + "_blobby_color_r", mR1);
+	mOptionConfig.setInteger("left_" + prefix + "_blobby_color_g", mG1);
+	mOptionConfig.setInteger("left_" + prefix + "_blobby_color_b", mB1);
+	mOptionConfig.setInteger("right_" + prefix + "_blobby_color_r", mR2);
+	mOptionConfig.setInteger("right_" + prefix + "_blobby_color_g", mG2);
+	mOptionConfig.setInteger("right_" + prefix + "_blobby_color_b", mB2);
+	mOptionConfig.setBool("left_" + prefix + "_blobby_oscillate", mLeftMorphing);
+	mOptionConfig.setBool("right_" + prefix + "_blobby_oscillate", mRightMorphing);
 
 	mOptionConfig.saveFile("config.xml");
 }
@@ -612,7 +645,7 @@ void GraphicOptionsPlusState::step_impl()
 	float playerColorSettingsHeight = heightOfElement;
 
 	//left blob:
-	imgui.doText(GEN_ID, Vector2(34.0, heightOfElement), tmanager->getString(TextManager::OP_LEFT_PLAYER) + " 2");
+	imgui.doText(GEN_ID, Vector2(34.0, heightOfElement), tmanager->getString(TextManager::OP_LEFT_PLAYER) + " " + std::to_string(mPairNum));
 
 	heightOfElement += standardLineHeight;
 
@@ -663,7 +696,7 @@ void GraphicOptionsPlusState::step_impl()
 	//right blob:
 	heightOfElement = playerColorSettingsHeight;
 
-	imgui.doText(GEN_ID, Vector2(434.0, heightOfElement), tmanager->getString(TextManager::OP_RIGHT_PLAYER) + " 2");
+	imgui.doText(GEN_ID, Vector2(434.0, heightOfElement), tmanager->getString(TextManager::OP_RIGHT_PLAYER) + " " + std::to_string(mPairNum));
 
 	heightOfElement += standardLineHeight;
 
@@ -724,69 +757,51 @@ void GraphicOptionsPlusState::step_impl()
 
 const char* GraphicOptionsPlusState::getStateName() const
 {
-	return "GraphicOptionsPlusState";
+	return ("GraphicOptionsPlusState_" + std::to_string(mPairNum)).c_str();
 }
 
-InputOptionsState::InputOptionsState(bool primary)
-	:	mPrimary(primary),
-		mSetKeyboard(0)
+InputOptionsState::InputOptionsState(int pairNum):
+	mPairNum(pairNum),
+	mCanChooseMouse(true),
+	mSetKeyboard(0)
 {	
 	mOptionConfig.loadFile("inputconfig.xml");
-	if (primary)
+
+	//global data:
+	mBlobbyTouchType = mOptionConfig.getInteger("blobby_touch_type");
+
+	auto prefix = getPairPrefix();
+
+	//left data:
+	mLeftDevice = mOptionConfig.getString("left" + prefix + "_blobby_device");
+	mLeftMouseJumpbutton = mOptionConfig.getInteger("left" + prefix + "_blobby_mouse_jumpbutton");
+	mLeftMouseSensitivity = mOptionConfig.getFloat("left" + prefix + "_blobby_mouse_sensitivity");
+	mLeftKeyboard[IA_LEFT] = mOptionConfig.getString("left" + prefix + "_blobby_keyboard_left");
+	mLeftKeyboard[IA_RIGHT] = mOptionConfig.getString("left" + prefix + "_blobby_keyboard_right");
+	mLeftKeyboard[IA_JUMP] = mOptionConfig.getString("left" + prefix + "_blobby_keyboard_jump");
+	mLeftJoystick[IA_LEFT] = mOptionConfig.getString("left" + prefix + "_blobby_joystick_left");
+	mLeftJoystick[IA_RIGHT] = mOptionConfig.getString("left" + prefix + "_blobby_joystick_right");
+	mLeftJoystick[IA_JUMP] = mOptionConfig.getString("left" + prefix + "_blobby_joystick_jump");
+	//right data:
+	mRightDevice = mOptionConfig.getString("right" + prefix + "_blobby_device");
+	mRightMouseJumpbutton = mOptionConfig.getInteger("right" + prefix + "_blobby_mouse_jumpbutton");
+	mRightMouseSensitivity = mOptionConfig.getFloat("right" + prefix + "_blobby_mouse_sensitivity");
+	mRightKeyboard[IA_LEFT] = mOptionConfig.getString("right" + prefix + "_blobby_keyboard_left");
+	mRightKeyboard[IA_RIGHT] = mOptionConfig.getString("right" + prefix + "_blobby_keyboard_right");
+	mRightKeyboard[IA_JUMP] = mOptionConfig.getString("right" + prefix + "_blobby_keyboard_jump");
+	mRightJoystick[IA_LEFT] = mOptionConfig.getString("right" + prefix + "_blobby_joystick_left");
+	mRightJoystick[IA_RIGHT] = mOptionConfig.getString("right" + prefix + "_blobby_joystick_right");
+	mRightJoystick[IA_JUMP] = mOptionConfig.getString("right" + prefix + "_blobby_joystick_jump");
+	
+	for (int i = 0; i < MAX_PLAYERS; ++i)
 	{
-		//left data:
-		mLeftDevice = mOptionConfig.getString("left_blobby_device");
-		mLeftMouseJumpbutton = mOptionConfig.getInteger("left_blobby_mouse_jumpbutton");
-		mLeftMouseSensitivity = mOptionConfig.getFloat("left_blobby_mouse_sensitivity");
-		mLeftKeyboard[IA_LEFT] = mOptionConfig.getString("left_blobby_keyboard_left");
-		mLeftKeyboard[IA_RIGHT] = mOptionConfig.getString("left_blobby_keyboard_right");
-		mLeftKeyboard[IA_JUMP] = mOptionConfig.getString("left_blobby_keyboard_jump");
-		mLeftJoystick[IA_LEFT] = mOptionConfig.getString("left_blobby_joystick_left");
-		mLeftJoystick[IA_RIGHT] = mOptionConfig.getString("left_blobby_joystick_right");
-		mLeftJoystick[IA_JUMP] = mOptionConfig.getString("left_blobby_joystick_jump");
-		//right data:
-		mRightDevice = mOptionConfig.getString("right_blobby_device");
-		mRightMouseJumpbutton = mOptionConfig.getInteger("right_blobby_mouse_jumpbutton");
-		mRightMouseSensitivity = mOptionConfig.getFloat("right_blobby_mouse_sensitivity");
-		mRightKeyboard[IA_LEFT] = mOptionConfig.getString("right_blobby_keyboard_left");
-		mRightKeyboard[IA_RIGHT] = mOptionConfig.getString("right_blobby_keyboard_right");
-		mRightKeyboard[IA_JUMP] = mOptionConfig.getString("right_blobby_keyboard_jump");
-		mRightJoystick[IA_LEFT] = mOptionConfig.getString("right_blobby_joystick_left");
-		mRightJoystick[IA_RIGHT] = mOptionConfig.getString("right_blobby_joystick_right");
-		mRightJoystick[IA_JUMP] = mOptionConfig.getString("right_blobby_joystick_jump");
-
-		//global data:
-		mBlobbyTouchType = mOptionConfig.getInteger("blobby_touch_type");
-
-		mLeft2Device = mOptionConfig.getString("left_2_blobby_device");
-		mRight2Device = mOptionConfig.getString("right_2_blobby_device");
+		prefix = UserConfig::getPlayerPrefix(PlayerSide(i));
+		if (mOptionConfig.getString(prefix + "_blobby_device") == "mouse")
+		{
+			mCanChooseMouse = false;
+			break;
+		}
 	}
-	else
-	{
-		//left data:
-		mLeftDevice = mOptionConfig.getString("left_2_blobby_device");
-		mLeftMouseJumpbutton = mOptionConfig.getInteger("left_2_blobby_mouse_jumpbutton");
-		mLeftMouseSensitivity = mOptionConfig.getFloat("left_2_blobby_mouse_sensitivity");
-		mLeftKeyboard[IA_LEFT] = mOptionConfig.getString("left_2_blobby_keyboard_left");
-		mLeftKeyboard[IA_RIGHT] = mOptionConfig.getString("left_2_blobby_keyboard_right");
-		mLeftKeyboard[IA_JUMP] = mOptionConfig.getString("left_2_blobby_keyboard_jump");
-		mLeftJoystick[IA_LEFT] = mOptionConfig.getString("left_2_blobby_joystick_left");
-		mLeftJoystick[IA_RIGHT] = mOptionConfig.getString("left_2_blobby_joystick_right");
-		mLeftJoystick[IA_JUMP] = mOptionConfig.getString("left_2_blobby_joystick_jump");
-		//right data:
-		mRightDevice = mOptionConfig.getString("right_2_blobby_device");
-		mRightMouseJumpbutton = mOptionConfig.getInteger("right_2_blobby_mouse_jumpbutton");
-		mRightMouseSensitivity = mOptionConfig.getFloat("right_2_blobby_mouse_sensitivity");
-		mRightKeyboard[IA_LEFT] = mOptionConfig.getString("right_2_blobby_keyboard_left");
-		mRightKeyboard[IA_RIGHT] = mOptionConfig.getString("right_2_blobby_keyboard_right");
-		mRightKeyboard[IA_JUMP] = mOptionConfig.getString("right_2_blobby_keyboard_jump");
-		mRightJoystick[IA_LEFT] = mOptionConfig.getString("right_2_blobby_joystick_left");
-		mRightJoystick[IA_RIGHT] = mOptionConfig.getString("right_2_blobby_joystick_right");
-		mRightJoystick[IA_JUMP] = mOptionConfig.getString("right_2_blobby_joystick_jump");
-
-		mLeft2Device = mOptionConfig.getString("left_blobby_device");
-		mRight2Device = mOptionConfig.getString("right_blobby_device");
-	}	
 }
 
 InputOptionsState::~InputOptionsState()
@@ -806,55 +821,31 @@ bool InputOptionsState::checkKeys(std::string keys[IA_COUNT])
 
 void InputOptionsState::save()
 {
-	if (mPrimary)
-	{
-		//left data:
-		mOptionConfig.setString("left_blobby_device", mLeftDevice);
-		mOptionConfig.setInteger("left_blobby_mouse_jumpbutton", mLeftMouseJumpbutton);
-		mOptionConfig.setFloat("left_blobby_mouse_sensitivity", mLeftMouseSensitivity);
-		mOptionConfig.setString("left_blobby_keyboard_left", mLeftKeyboard[IA_LEFT]);
-		mOptionConfig.setString("left_blobby_keyboard_right", mLeftKeyboard[IA_RIGHT]);
-		mOptionConfig.setString("left_blobby_keyboard_jump", mLeftKeyboard[IA_JUMP]);
-		mOptionConfig.setString("left_blobby_joystick_left", mLeftJoystick[IA_LEFT]);
-		mOptionConfig.setString("left_blobby_joystick_right", mLeftJoystick[IA_RIGHT]);
-		mOptionConfig.setString("left_blobby_joystick_jump", mLeftJoystick[IA_JUMP]);
-		//right data:
-		mOptionConfig.setString("right_blobby_device", mRightDevice);
-		mOptionConfig.setInteger("right_blobby_mouse_jumpbutton", mRightMouseJumpbutton);
-		mOptionConfig.setFloat("right_blobby_mouse_sensitivity", mRightMouseSensitivity);
-		mOptionConfig.setString("right_blobby_keyboard_left", mRightKeyboard[IA_LEFT]);
-		mOptionConfig.setString("right_blobby_keyboard_right", mRightKeyboard[IA_RIGHT]);
-		mOptionConfig.setString("right_blobby_keyboard_jump", mRightKeyboard[IA_JUMP]);
-		mOptionConfig.setString("right_blobby_joystick_left", mRightJoystick[IA_LEFT]);
-		mOptionConfig.setString("right_blobby_joystick_right", mRightJoystick[IA_RIGHT]);
-		mOptionConfig.setString("right_blobby_joystick_jump", mRightJoystick[IA_JUMP]);
+	//global data:
+	mOptionConfig.setInteger("blobby_touch_type", mBlobbyTouchType);
 
-		//global data:
-		mOptionConfig.setInteger("blobby_touch_type", mBlobbyTouchType);
-	}
-	else
-	{
-		//left data:
-		mOptionConfig.setString("left_2_blobby_device", mLeftDevice);
-		mOptionConfig.setInteger("left_2_blobby_mouse_jumpbutton", mLeftMouseJumpbutton);
-		mOptionConfig.setFloat("left_2_blobby_mouse_sensitivity", mLeftMouseSensitivity);
-		mOptionConfig.setString("left_2_blobby_keyboard_left", mLeftKeyboard[IA_LEFT]);
-		mOptionConfig.setString("left_2_blobby_keyboard_right", mLeftKeyboard[IA_RIGHT]);
-		mOptionConfig.setString("left_2_blobby_keyboard_jump", mLeftKeyboard[IA_JUMP]);
-		mOptionConfig.setString("left_2_blobby_joystick_left", mLeftJoystick[IA_LEFT]);
-		mOptionConfig.setString("left_2_blobby_joystick_right", mLeftJoystick[IA_RIGHT]);
-		mOptionConfig.setString("left_2_blobby_joystick_jump", mLeftJoystick[IA_JUMP]);
-		//right data:
-		mOptionConfig.setString("right_2_blobby_device", mRightDevice);
-		mOptionConfig.setInteger("right_2_blobby_mouse_jumpbutton", mRightMouseJumpbutton);
-		mOptionConfig.setFloat("right_2_blobby_mouse_sensitivity", mRightMouseSensitivity);
-		mOptionConfig.setString("right_2_blobby_keyboard_left", mRightKeyboard[IA_LEFT]);
-		mOptionConfig.setString("right_2_blobby_keyboard_right", mRightKeyboard[IA_RIGHT]);
-		mOptionConfig.setString("right_2_blobby_keyboard_jump", mRightKeyboard[IA_JUMP]);
-		mOptionConfig.setString("right_2_blobby_joystick_left", mRightJoystick[IA_LEFT]);
-		mOptionConfig.setString("right_2_blobby_joystick_right", mRightJoystick[IA_RIGHT]);
-		mOptionConfig.setString("right_2_blobby_joystick_jump", mRightJoystick[IA_JUMP]);
-	}	
+	auto prefix = getPairPrefix();	
+
+	//left data:
+	mOptionConfig.setString("left" + prefix + "_blobby_device", mLeftDevice);
+	mOptionConfig.setInteger("left" + prefix + "_blobby_mouse_jumpbutton", mLeftMouseJumpbutton);
+	mOptionConfig.setFloat("left" + prefix + "_blobby_mouse_sensitivity", mLeftMouseSensitivity);
+	mOptionConfig.setString("left" + prefix + "_blobby_keyboard_left", mLeftKeyboard[IA_LEFT]);
+	mOptionConfig.setString("left" + prefix + "_blobby_keyboard_right", mLeftKeyboard[IA_RIGHT]);
+	mOptionConfig.setString("left" + prefix + "_blobby_keyboard_jump", mLeftKeyboard[IA_JUMP]);
+	mOptionConfig.setString("left" + prefix + "_blobby_joystick_left", mLeftJoystick[IA_LEFT]);
+	mOptionConfig.setString("left" + prefix + "_blobby_joystick_right", mLeftJoystick[IA_RIGHT]);
+	mOptionConfig.setString("left" + prefix + "_blobby_joystick_jump", mLeftJoystick[IA_JUMP]);
+	//right data:
+	mOptionConfig.setString("right" + prefix + "_blobby_device", mRightDevice);
+	mOptionConfig.setInteger("right" + prefix + "_blobby_mouse_jumpbutton", mRightMouseJumpbutton);
+	mOptionConfig.setFloat("right" + prefix + "_blobby_mouse_sensitivity", mRightMouseSensitivity);
+	mOptionConfig.setString("right" + prefix + "_blobby_keyboard_left", mRightKeyboard[IA_LEFT]);
+	mOptionConfig.setString("right" + prefix + "_blobby_keyboard_right", mRightKeyboard[IA_RIGHT]);
+	mOptionConfig.setString("right" + prefix + "_blobby_keyboard_jump", mRightKeyboard[IA_JUMP]);
+	mOptionConfig.setString("right" + prefix + "_blobby_joystick_left", mRightJoystick[IA_LEFT]);
+	mOptionConfig.setString("right" + prefix + "_blobby_joystick_right", mRightJoystick[IA_RIGHT]);
+	mOptionConfig.setString("right" + prefix + "_blobby_joystick_jump", mRightJoystick[IA_JUMP]);		
 
 	mOptionConfig.saveFile("inputconfig.xml");
 }
@@ -870,10 +861,10 @@ void InputOptionsState::step_impl()
 	std::string lastActionKey = InputManager::getSingleton()->getLastActionKey();
 	
 	// left player side:
-	handlePlayerInput(mPrimary? LEFT_PLAYER : LEFT_PLAYER_2, lastActionKey, mLeftMouseJumpbutton, mLeftKeyboard, mLeftJoystick);
+	handlePlayerInput(LEFT_PLAYER, lastActionKey, mLeftMouseJumpbutton, mLeftKeyboard, mLeftJoystick);
 
 	//right player side:
-	handlePlayerInput(mPrimary? RIGHT_PLAYER : RIGHT_PLAYER_2, lastActionKey, mRightMouseJumpbutton, mRightKeyboard, mRightJoystick);
+	handlePlayerInput(RIGHT_PLAYER, lastActionKey, mRightMouseJumpbutton, mRightKeyboard, mRightJoystick);
 	
 
 	//check if a capture window is open, to set all widgets inactive:
@@ -925,19 +916,20 @@ void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastAc
 {
 	IMGUI& imgui = IMGUI::getSingleton();
 	auto tmanager = TextManager::getSingleton();
-		
-	std::string& device = (player % 2) ? mRightDevice : mLeftDevice;
-	int base_x = (player % 2) ? 400 : 0;
+	auto isRightPlayer = player == RIGHT_PLAYER;	
+
+	std::string& device = isRightPlayer ? mRightDevice : mLeftDevice;
+	const int base_x = isRightPlayer ? 400 : 0;
 
 	std::string p_str;
 
-	if (player % 2)
+	if (isRightPlayer)
 		p_str = tmanager->getString(TextManager::OP_RIGHT_PLAYER);
 	else
 		p_str = tmanager->getString(TextManager::OP_LEFT_PLAYER);
 
-	if (player > RIGHT_PLAYER)
-		p_str += " " + std::to_string(player / 2 + 1);
+	if (mPairNum > 1)
+		p_str += " " + std::to_string(mPairNum);
 		
 	imgui.doText(GEN_ID, Vector2(base_x + 34.0, 10.0), p_str);
 
@@ -946,6 +938,7 @@ void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastAc
 		if (device == "mouse")
 		{
 			device = "keyboard";
+			mCanChooseMouse = true;
 		}
 		else if (device == "keyboard")
 		{
@@ -953,10 +946,10 @@ void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastAc
 		}
 		else if (device == "joystick")
 		{			
-			if (mRightDevice != "mouse" && mLeftDevice != "mouse" &&
-				mRight2Device != "mouse" && mLeft2Device != "mouse")
+			if (mCanChooseMouse)
 			{
 				device = "mouse";
+				mCanChooseMouse = false;
 			}
 			else
 			{
@@ -967,7 +960,7 @@ void InputOptionsState::handlePlayerInput(PlayerSide player, std::string& lastAc
 	//if mouse device is selected:
 	if (device == "mouse")
 	{
-		handleMouseInput(base_x, mouse, (player % 2) ? mRightMouseSensitivity : mLeftMouseSensitivity);
+		handleMouseInput(base_x, mouse, isRightPlayer ? mRightMouseSensitivity : mLeftMouseSensitivity);
 	}
 	if ((mouse == -2) && (InputManager::getSingleton()->getLastMouseButton() == -1))
 		mouse = -1;

@@ -81,7 +81,7 @@ enum PlayerSide
 	NUM_SIDES = 2,
 	LEFT_PLAYER_2 = 2,
 	RIGHT_PLAYER_2 = 3,
-	MAX_PLAYERS // This is always one more than the highest player enum
+	MAX_PLAYERS = 8 // This is always one more than the highest player enum
 	            // and can be used to declare arrays
 };
 
