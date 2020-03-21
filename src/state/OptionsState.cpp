@@ -142,7 +142,7 @@ void OptionState::step_impl()
 		save();
 		switchState(new InputOptionsState(1));
 	}
-	
+#if __DESKTOP__
 	if (imgui.doButton(GEN_ID, Vector2(440.0, 390.0), tmanager->getString(TextManager::OP_INPUT_OP_PLUS) + " 2"))
 	{
 		save();
@@ -158,13 +158,13 @@ void OptionState::step_impl()
 		save();
 		switchState(new InputOptionsState(4));
 	}
-
+#endif
 	if (imgui.doButton(GEN_ID, Vector2(40.0, 430.0), TextManager::OP_GFX_OP))
 	{
 		save();
 		switchState(new GraphicOptionsState());
 	}
-
+#if __DESKTOP__
 	if (imgui.doButton(GEN_ID, Vector2(440.0, 430.0), tmanager->getString(TextManager::OP_GFX_OP_PLUS) + " 2"))
 	{
 		save();
@@ -180,13 +180,13 @@ void OptionState::step_impl()
 		save();
 		switchState(new GraphicOptionsPlusState(4));
 	}
-
+#endif
 	if (imgui.doButton(GEN_ID, Vector2(40.0, 470.0), TextManager::OP_MISC))
 	{
 		save();
 		switchState(new MiscOptionsState());
 	}
-
+#if __DESKTOP__
 	if (imgui.doButton(GEN_ID, Vector2(440.0, 470.0), tmanager->getString(TextManager::OP_PLUS) + " 2"))
 	{
 		save();
@@ -202,7 +202,7 @@ void OptionState::step_impl()
 		save();
 		switchState(new OptionPlusState(mScriptNames, 4));
 	}
-
+#endif
 	if (imgui.doButton(GEN_ID, Vector2(224.0, 530.0), TextManager::LBL_OK))
 	{
 		save();
@@ -1189,8 +1189,8 @@ void InputOptionsState::step_impl()
 #endif
 
 const char* InputOptionsState::getStateName() const
-{
-	return "InputOptionsState";
+{		
+	return ("InputOptionsState" + getPairPrefix()).c_str();
 }
 
 MiscOptionsState::MiscOptionsState()
