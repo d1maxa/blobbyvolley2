@@ -72,7 +72,7 @@ void File::open(const std::string& filename, OpenMode mode, bool no_override)
 		if (pos != 0)
 		{
 			auto dirName = filename.substr(0, pos);
-			if (!PHYSFS_isDirectory(dirName.c_str()) && !PHYSFS_mkdir(dirName.c_str()))
+			if (!PHYSFS_mkdir(dirName.c_str()))
 				BOOST_THROW_EXCEPTION(FileLoadException(filename));
 		}		
 
