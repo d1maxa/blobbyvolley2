@@ -440,7 +440,7 @@ void OnlineSearchState::doSearchServers()
 	/* for 2x2 we need new list
 	try
 	{
-		BlobNet::Layer::Http http("blobby.sourceforge.net", 80);
+		BlobNet::Layer::Http http("blobbyvolley.de", 80);
 
 		std::stringstream serverListXml;
 		http.request("server.php", serverListXml);
