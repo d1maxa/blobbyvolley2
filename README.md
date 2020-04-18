@@ -1,7 +1,7 @@
 # Blobby Volley 2 [![Build Status](https://travis-ci.org/danielknobe/blobbyvolley2.svg?branch=master)](https://travis-ci.org/danielknobe/blobbyvolley2)
 **The head-to-head multiplayer ball game**
 
-**This version for 2x2 game (making code possible for 3 vs 1 or 3 vs 3)**
+**This version for 2x2, 3x3, 4x4 game (making code possible for 4 vs 1 etc)**
 
 ### Website
  http://blobby.sourceforge.net
