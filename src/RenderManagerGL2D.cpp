@@ -491,7 +491,7 @@ bool RenderManagerGL2D::setBackground(const std::string& filename)
 		mBackground = imgBuffer->glHandle;
 		mImageMap["background"] = imgBuffer;
 	}
-	catch (FileLoadException)
+	catch (const FileLoadException&)
 	{
 		return false;
 	}
